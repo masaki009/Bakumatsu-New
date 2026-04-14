@@ -16,7 +16,7 @@ type Category = {
 const COLUMNS: Category[][] = [
   [
     { title: '句読法　リーディング', ids: ['slash-reading'] },
-    { title: '素句読法　リーディング', ids: ['ex-reading'] },
+    { title: '素読法　リーディング', ids: ['ex-reading'] },
   ],
   [
     { title: '句読法　ライティング', ids: ['word-order-quiz', 'japanese-english-process'] },
