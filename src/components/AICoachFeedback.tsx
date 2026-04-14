@@ -182,7 +182,7 @@ export default function AICoachFeedback({ onBack }: AICoachFeedbackProps) {
       }
 
       if (!coachProfile) {
-        setError('まず最初に「プロフィール設定」→「チューター設定」からAIチューターを登録してください。');
+        setError('まず最初に「プロフィール設定」→「英語講師（チューター）設定」からチューターを登録してください。');
         setGenerating(false);
         return;
       }
