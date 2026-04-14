@@ -136,7 +136,7 @@ export default function GeneralConsultation({ onBack }: GeneralConsultationProps
               </div>
               <div>
                 <h1 className="text-xl font-bold text-gray-900">勉強の悩み全般を相談</h1>
-                <p className="text-sm text-gray-600">AI学習チューターがサポートします</p>
+                <p className="text-sm text-gray-600">英語講師（チューター）がサポートします</p>
               </div>
             </div>
           </div>
