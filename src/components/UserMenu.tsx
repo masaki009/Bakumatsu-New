@@ -101,7 +101,7 @@ export default function UserMenu() {
       icon: TrendingUp,
       subItems: [
         { id: 'daily-report', label: '日報登録', icon: FileText },
-        { id: 'history', label: 'History', icon: TrendingUp },
+        { id: 'history', label: '学習履歴', icon: TrendingUp },
         { id: 'extensive-reading', label: '多読貯金', icon: BookOpen },
       ],
     },
