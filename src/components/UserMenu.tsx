@@ -86,7 +86,7 @@ export default function UserMenu() {
       subtitle: '学習状態の確認や提案',
       icon: User,
       subItems: [
-        { id: 'ai-feedback', label: 'AIチューターフィードバック', icon: MessageSquare },
+        { id: 'ai-feedback', label: '英語講師（チューター）フィードバック', icon: MessageSquare },
         { id: 'digital-pet-dashboard', label: 'ばくまっち', icon: Egg },
         { id: 'biorhythm', label: 'バイオリズム', icon: Activity },
         { id: 'four-pillars-learning', label: '本日の学習提案 /　四柱推命', icon: Sparkles },
@@ -108,7 +108,7 @@ export default function UserMenu() {
     {
       id: 'consulting',
       label: 'コンサルティング',
-      subtitle: '専属AIチューターに相談',
+      subtitle: '英語講師（チューター）に相談',
       icon: MessageCircle,
       subItems: [
         { id: 'grammar-consultation', label: '英語に関するスキル・メンタル相談全般の回答します', icon: PenTool },
