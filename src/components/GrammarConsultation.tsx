@@ -189,7 +189,7 @@ export default function GrammarConsultation({ onBack }: GrammarConsultationProps
               </div>
               <div>
                 <h1 className="text-xl font-bold text-gray-900">英語・スキル＆メンタル相談</h1>
-                <p className="text-sm text-gray-600">AI学習チューターが英語に関することなんでも回答します</p>
+                <p className="text-sm text-gray-600">英語講師（チューター）が英語に関することなんでも回答します</p>
               </div>
             </div>
           </div>
