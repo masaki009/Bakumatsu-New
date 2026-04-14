@@ -103,13 +103,13 @@ export default function History({ onBack }: HistoryProps) {
                   <thead className="bg-gray-50 sticky top-0">
                     <tr>
                       <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 border-b border-gray-200">日付</th>
-                      <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700 border-b border-gray-200">サイマル　英和</th>
-                      <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700 border-b border-gray-200">パラフレイズ　和英</th>
-                      <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700 border-b border-gray-200">チャンク</th>
+                      <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700 border-b border-gray-200">リーディング</th>
+                      <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700 border-b border-gray-200">ライティング</th>
+                      <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700 border-b border-gray-200">リスニング</th>
                       <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700 border-b border-gray-200">ボキャビル</th>
                       <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700 border-b border-gray-200">多読</th>
                       <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700 border-b border-gray-200">時間</th>
-                      <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700 border-b border-gray-200">Judge</th>
+                      <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700 border-b border-gray-200">自己評価</th>
                       <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 border-b border-gray-200">課題</th>
                       <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 border-b border-gray-200">ひとこと</th>
                     </tr>
