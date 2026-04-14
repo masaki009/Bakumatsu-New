@@ -278,7 +278,7 @@ export default function ReportSubmit({ onBack }: ReportSubmitProps) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  サイマル　英和（件数）
+                  英和　句読法　リーディング（件数）
                 </label>
                 <input
                   type="number"
@@ -291,7 +291,7 @@ export default function ReportSubmit({ onBack }: ReportSubmitProps) {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  パラフレイズ　和英（件数）
+                  和英　句読法　ライティング（件数）
                 </label>
                 <input
                   type="number"
@@ -304,7 +304,7 @@ export default function ReportSubmit({ onBack }: ReportSubmitProps) {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  リスニング（チャンク）（件数）
+                  チャンク　空耳法　リスニング（件数）
                 </label>
                 <input
                   type="number"
