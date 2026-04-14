@@ -250,7 +250,7 @@ export default function CoachProfile({ onBack }: CoachProfileProps) {
         <form onSubmit={handleSubmit} className="space-y-8">
           <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
             <h2 className="text-xl font-bold text-gray-900 mb-1">1. タイプ</h2>
-            <p className="text-sm text-gray-600 mb-4">チューターの人格スタイル</p>
+            <p className="text-sm text-gray-600 mb-4">英語講師（チューター）の人格スタイル</p>
             <div className="space-y-3">
               {typeOptions.map((option) => (
                 <label
