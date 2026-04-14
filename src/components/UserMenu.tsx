@@ -117,7 +117,7 @@ export default function UserMenu() {
     {
       id: 'profile-settings',
       label: 'プロフィール設定',
-      subtitle: 'AIチューター＆自分自身のプロフィール',
+      subtitle: '英語講師（チューター）＆自分自身のプロフィール',
       icon: Settings,
       subItems: [
         { id: 'coach-settings', label: 'チューター設定', icon: UserCog },
