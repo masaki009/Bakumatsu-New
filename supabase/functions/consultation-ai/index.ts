@@ -125,7 +125,7 @@ Deno.serve(async (req: Request) => {
 
       // コーチプロフィール情報を追加
       if (coachProfile) {
-        systemPrompt += `\n\n## あなたのチューター設定\n`;
+        systemPrompt += `\n\n## あなたの英語講師（チューター）設定\n`;
         systemPrompt += `- 人格スタイル: ${coachProfile.type}\n`;
         systemPrompt += `- フィードバック詳細度: ${coachProfile.character}\n`;
         systemPrompt += `- 間違い指摘方法: ${coachProfile.target}\n`;
