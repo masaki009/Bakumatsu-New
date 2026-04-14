@@ -120,7 +120,7 @@ export default function UserMenu() {
       subtitle: '英語講師（チューター）＆自分自身のプロフィール',
       icon: Settings,
       subItems: [
-        { id: 'coach-settings', label: 'チューター設定', icon: UserCog },
+        { id: 'coach-settings', label: '英語講師（チューター）設定', icon: UserCog },
         { id: 'self-settings', label: 'セルフ設定', icon: User },
       ],
     },
