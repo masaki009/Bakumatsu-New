@@ -235,8 +235,8 @@ export default function CoachProfile({ onBack }: CoachProfileProps) {
           <div className="flex items-center gap-3">
             <img src="/aaa1.png" alt="チューター" className="w-8 h-8 object-contain" />
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">専属AIチューター設定</h1>
-              <p className="text-gray-600">あなた専属のチューターを選びます</p>
+              <h1 className="text-3xl font-bold text-gray-900">英語講師（チューター）設定</h1>
+              <p className="text-gray-600">あなた専属の英語講師（チューター）を選びます</p>
             </div>
           </div>
         </div>
