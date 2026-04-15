@@ -80,7 +80,7 @@ export default function History({ onBack }: HistoryProps) {
         <div className="bg-white rounded-2xl shadow-lg p-8">
           <div className="flex items-center gap-3 mb-6">
             <Calendar className="w-8 h-8 text-blue-600" />
-            <h1 className="text-3xl font-bold text-gray-800">History</h1>
+            <h1 className="text-3xl font-bold text-gray-800">学習履歴</h1>
           </div>
 
           {loading ? (
