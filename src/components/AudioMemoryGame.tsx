@@ -132,13 +132,7 @@ export default function AudioMemoryGame({ onBack }: AudioMemoryGameProps) {
         }
       );
 
-      const responseData = await response.json().catch(() => ({ error: 'レスポンスの解析に失敗しました' }));
-
-      if (!response.ok) {
-        setSourceError(responseData.error || 'データの取得に失敗しました。');
-        setIsLoadingSource(false);
-        return;
-      }
+      const responseData = await response.json().catch(() => ({ items: [] }));
 
       const items: AudioItem[] = responseData.items || [];
 
@@ -154,7 +148,9 @@ export default function AudioMemoryGame({ onBack }: AudioMemoryGameProps) {
       setAvailableItems(items);
     } catch (error) {
       console.error('Source load error:', error);
-      setSourceError('データの取得中にエラーが発生しました。');
+      const shuffled = [...GITHUB_ITEMS].sort(() => Math.random() - 0.5);
+      setSelectedSource(sourceType);
+      setAvailableItems(shuffled);
     } finally {
       setIsLoadingSource(false);
     }
