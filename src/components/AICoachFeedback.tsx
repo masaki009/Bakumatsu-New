@@ -948,7 +948,7 @@ export default function AICoachFeedback({ onBack }: AICoachFeedbackProps) {
             <div className="flex items-center gap-3 flex-1">
               <img src="/ait.png" alt="AI Tutor" className="w-12 h-12" />
               <div>
-                <h1 className="text-3xl font-bold text-gray-900">AIチューターフィードバック</h1>
+                <h1 className="text-3xl font-bold text-gray-900">英語講師（チューター）フィードバック</h1>
                 <p className="text-gray-600">{formatJSTDate()}</p>
               </div>
             </div>
