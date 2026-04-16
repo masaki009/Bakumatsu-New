@@ -142,10 +142,10 @@ Deno.serve(async (req: Request) => {
       if (titleKey) en = getTitle(properties[titleKey]);
       else if (engRichKey) en = getRichText(properties[engRichKey]);
 
-      const jaKey = keys.find(k => ["ja", "jp", "japanese", "日本語", "意味", "和訳"].includes(k.toLowerCase()));
+      const jaKey = keys.find(k => ["ja", "jp", "jpn", "japanese", "日本語", "意味", "和訳"].includes(k.toLowerCase()));
       const ja = jaKey ? getRichText(properties[jaKey]) : "";
 
-      const exKey = keys.find(k => ["example", "例文", "sentence", "例"].includes(k.toLowerCase()));
+      const exKey = keys.find(k => ["example", "e.g.eng", "例文", "sentence", "例"].includes(k.toLowerCase()));
       const example = exKey ? getRichText(properties[exKey]) : "";
 
       return { en, ja, example, pageStatus };
