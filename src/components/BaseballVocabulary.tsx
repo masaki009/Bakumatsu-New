@@ -435,20 +435,22 @@ export default function BaseballVocabulary({ onBack }: Props) {
               </div>
             )}
 
-            <div className="mt-6 border-t pt-4">
-              <button
-                onClick={loadDebugInfo}
-                disabled={isLoadingDebug}
-                className="text-xs text-blue-500 hover:text-blue-700 underline"
-              >
-                {isLoadingDebug ? '確認中...' : '[デバッグ] Notionデータ構造を確認'}
-              </button>
-              {debugInfo && (
-                <pre className="mt-3 p-3 bg-gray-50 rounded-lg text-xs text-gray-700 overflow-auto max-h-48">
-                  {JSON.stringify(debugInfo, null, 2)}
-                </pre>
-              )}
-            </div>
+            {sourceError && (
+              <div className="mt-6 border-t pt-4">
+                <button
+                  onClick={loadDebugInfo}
+                  disabled={isLoadingDebug}
+                  className="text-xs text-blue-500 hover:text-blue-700 underline"
+                >
+                  {isLoadingDebug ? '確認中...' : '[デバッグ] Notionデータ構造を確認'}
+                </button>
+                {debugInfo && (
+                  <pre className="mt-3 p-3 bg-gray-50 rounded-lg text-xs text-gray-700 overflow-auto max-h-48">
+                    {JSON.stringify(debugInfo, null, 2)}
+                  </pre>
+                )}
+              </div>
+            )}
           </div>
         </main>
       </div>

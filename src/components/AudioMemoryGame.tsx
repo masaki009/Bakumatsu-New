@@ -539,20 +539,22 @@ export default function AudioMemoryGame({ onBack }: AudioMemoryGameProps) {
                     </div>
                   )}
 
-                  <div className="mt-4 pt-4 border-t border-gray-100">
-                    <button
-                      onClick={loadDebugInfo}
-                      disabled={isLoadingDebug}
-                      className="text-xs text-gray-400 hover:text-gray-600 underline"
-                    >
-                      {isLoadingDebug ? '確認中...' : '[デバッグ] Notionデータ構造を確認'}
-                    </button>
-                    {debugInfo && (
-                      <pre className="mt-2 p-3 bg-gray-50 border border-gray-200 rounded-lg text-xs text-gray-700 overflow-auto max-h-64">
-                        {JSON.stringify(debugInfo, null, 2)}
-                      </pre>
-                    )}
-                  </div>
+                  {sourceError && (
+                    <div className="mt-4 pt-4 border-t border-gray-100">
+                      <button
+                        onClick={loadDebugInfo}
+                        disabled={isLoadingDebug}
+                        className="text-xs text-gray-400 hover:text-gray-600 underline"
+                      >
+                        {isLoadingDebug ? '確認中...' : '[デバッグ] Notionデータ構造を確認'}
+                      </button>
+                      {debugInfo && (
+                        <pre className="mt-2 p-3 bg-gray-50 border border-gray-200 rounded-lg text-xs text-gray-700 overflow-auto max-h-64">
+                          {JSON.stringify(debugInfo, null, 2)}
+                        </pre>
+                      )}
+                    </div>
+                  )}
 
                   {selectedSource && availableItems.length > 0 && !isLoadingSource && (
                     <div className="mt-4 px-4 py-2 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700">
