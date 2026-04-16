@@ -1,5 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import * as jose from "npm:jose@5";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -20,6 +21,23 @@ interface RequestBody {
   translation: string;
 }
 
+async function verifyES256JWT(token: string, supabaseUrl: string): Promise<{ email: string; sub: string } | null> {
+  try {
+    const JWKS = jose.createRemoteJWKSet(
+      new URL(`${supabaseUrl}/auth/v1/.well-known/jwks.json`)
+    );
+    const { payload } = await jose.jwtVerify(token, JWKS, {
+      algorithms: ["ES256"],
+    });
+    const email = payload.email as string;
+    const sub = payload.sub as string;
+    if (!email || !sub) return null;
+    return { email, sub };
+  } catch {
+    return null;
+  }
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 200, headers: corsHeaders });
@@ -27,7 +45,7 @@ Deno.serve(async (req: Request) => {
 
   try {
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return new Response(
         JSON.stringify({ error: "認証が必要です" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -35,16 +53,11 @@ Deno.serve(async (req: Request) => {
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-    const userClient = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: authHeader } },
-    });
-
-    const { data: { user }, error: authError } = await userClient.auth.getUser();
-
-    if (authError || !user || !user.email) {
+    const jwt = authHeader.replace("Bearer ", "");
+    const userInfo = await verifyES256JWT(jwt, supabaseUrl);
+    if (!userInfo) {
       return new Response(
         JSON.stringify({ error: "認証に失敗しました" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -66,7 +79,7 @@ Deno.serve(async (req: Request) => {
     const { data: notionSettings, error: settingsError } = await adminClient
       .from("user_notion")
       .select("notion_api_key, db_id_chunk")
-      .eq("email", user.email)
+      .eq("email", userInfo.email)
       .maybeSingle();
 
     if (settingsError || !notionSettings?.notion_api_key || !notionSettings?.db_id_chunk) {
