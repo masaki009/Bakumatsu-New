@@ -176,7 +176,7 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    const filtered = allItems.filter(item => item.pageStatus === status && item.en !== "");
+    const filtered = allItems.filter(item => item.pageStatus?.includes(status) && item.en !== "");
     const shuffled = filtered.sort(() => Math.random() - 0.5).slice(0, 10);
     const items = shuffled.map(({ en, ja, example }) => ({ en, ja, example }));
 

@@ -157,15 +157,7 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    const queryBody = debug
-      ? { page_size: 100 }
-      : {
-          page_size: 100,
-          filter: {
-            property: "Status",
-            status: { equals: status },
-          },
-        };
+    const queryBody = { page_size: 100 };
 
     const notionResponse = await fetch(
       `https://api.notion.com/v1/databases/${notionSettings.db_id_chunk}/query`,
@@ -239,11 +231,22 @@ Deno.serve(async (req: Request) => {
     }
 
     const items = results
-      .map(page => ({
-        audioUrl: findAudioUrl(page.properties),
-        engText: findEngText(page.properties),
-      }))
-      .filter(item => item.audioUrl !== "")
+      .map(page => {
+        const statusKey = Object.keys(page.properties).find(k => k.toLowerCase() === "status");
+        const statusProp = statusKey ? page.properties[statusKey] : undefined;
+        let pageStatus = "";
+        if (statusProp) {
+          if (statusProp.type === "status") pageStatus = (statusProp.status as { name: string })?.name || "";
+          else if (statusProp.type === "select") pageStatus = (statusProp.select as { name: string })?.name || "";
+        }
+        return {
+          audioUrl: findAudioUrl(page.properties),
+          engText: findEngText(page.properties),
+          pageStatus,
+        };
+      })
+      .filter(item => item.audioUrl !== "" && item.pageStatus?.includes(status))
+      .map(({ audioUrl, engText }) => ({ audioUrl, engText }))
       .slice(0, 8);
 
     return new Response(
