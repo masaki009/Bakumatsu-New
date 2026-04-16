@@ -88,7 +88,8 @@ export default function BaseballVocabulary({ onBack }: Props) {
   const [correct, setCorrect] = useState(0);
   const [incorrect, setIncorrect] = useState(0);
   const [remaining, setRemaining] = useState(10);
-  const [usedWords, setUsedWords] = useState<Word[]>([]);
+  const [wordQueue, setWordQueue] = useState<Word[]>([]);
+  const [queueIndex, setQueueIndex] = useState(0);
   const [wrongWords, setWrongWords] = useState<Word[]>([]);
   const [showMeaning, setShowMeaning] = useState(false);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
@@ -235,11 +236,15 @@ export default function BaseballVocabulary({ onBack }: Props) {
     }
   };
 
-  const getRandomWord = useCallback(() => {
-    const available = activeWords.filter(w => !usedWords.some(u => u.en === w.en));
-    if (available.length === 0) return null;
-    return available[Math.floor(Math.random() * available.length)];
-  }, [activeWords, usedWords]);
+  const buildWordQueue = useCallback((words: Word[], count: number): Word[] => {
+    if (words.length === 0) return [];
+    const queue: Word[] = [];
+    let pool = [...words].sort(() => Math.random() - 0.5);
+    while (queue.length < count) {
+      queue.push(...pool.sort(() => Math.random() - 0.5));
+    }
+    return queue.slice(0, count);
+  }, []);
 
   const handlePitch = useCallback(() => {
     if (gameState !== 'ready') return;
@@ -249,13 +254,16 @@ export default function BaseballVocabulary({ onBack }: Props) {
     setTimeout(() => setBallPosition({ x: 50, y: 20, scale: 0.3 }), 50);
     setTimeout(() => { setBatterSwing(true); playSound('hit'); }, 600);
     setTimeout(() => {
-      const word = getRandomWord();
-      if (word) { setCurrentWord(word); setUsedWords(prev => [...prev, word]); }
+      setQueueIndex(prev => {
+        const word = wordQueue[prev] ?? null;
+        if (word) setCurrentWord(word);
+        return prev + 1;
+      });
       setGameState('showing-word');
       setBatterSwing(false);
       setBallPosition({ x: 50, y: 100, scale: 1 });
     }, 800);
-  }, [gameState, getRandomWord, playSound]);
+  }, [gameState, wordQueue, playSound]);
 
   const handleShowExample = useCallback(() => {
     if (gameState !== 'showing-word' || !currentWord) return;
@@ -291,51 +299,54 @@ export default function BaseballVocabulary({ onBack }: Props) {
       setIsCorrect(null);
       setBallPosition({ x: 50, y: 100, scale: 1 });
       setBatterSwing(false);
-      const newRemaining = remaining - 1;
-      setRemaining(newRemaining);
-      if (newRemaining === 0) { setGameState('game-over'); playSound('end'); }
-      else setGameState('ready');
+      setRemaining(prev => {
+        const next = prev - 1;
+        if (next === 0) { setGameState('game-over'); playSound('end'); }
+        else setGameState('ready');
+        return next;
+      });
     }, 2000);
-  }, [gameState, currentWord, remaining, playSound]);
+  }, [gameState, currentWord, playSound]);
 
   const handleModeSelect = useCallback((selectedMode: QuizMode) => {
     setMode(selectedMode);
+    setWordQueue(buildWordQueue(activeWords, 10));
+    setQueueIndex(0);
     setGameState('ready');
     setCurrentWord(null);
     setCorrect(0);
     setIncorrect(0);
     setRemaining(10);
-    setUsedWords([]);
     setWrongWords([]);
     setShowMeaning(false);
     setIsCorrect(null);
     setBallPosition({ x: 50, y: 100, scale: 1 });
-  }, []);
+  }, [activeWords, buildWordQueue]);
 
   const handleRestart = useCallback(() => {
-    const reshuffled = [...activeWords].sort(() => Math.random() - 0.5);
-    setActiveWords(reshuffled);
+    setWordQueue(buildWordQueue(activeWords, 10));
+    setQueueIndex(0);
     setGameState('ready');
     setCurrentWord(null);
     setCorrect(0);
     setIncorrect(0);
     setRemaining(10);
-    setUsedWords([]);
     setWrongWords([]);
     setShowMeaning(false);
     setIsCorrect(null);
     setBallPosition({ x: 50, y: 100, scale: 1 });
-  }, [activeWords]);
+  }, [activeWords, buildWordQueue]);
 
   const handleNextSet = useCallback(() => {
     setGameState('select-source');
     setSourceType(null);
     setActiveWords([]);
+    setWordQueue([]);
+    setQueueIndex(0);
     setCurrentWord(null);
     setCorrect(0);
     setIncorrect(0);
     setRemaining(10);
-    setUsedWords([]);
     setWrongWords([]);
     setShowMeaning(false);
     setIsCorrect(null);
