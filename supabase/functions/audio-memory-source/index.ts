@@ -132,7 +132,7 @@ Deno.serve(async (req: Request) => {
     }
 
     const url = new URL(req.url);
-    const status = url.searchParams.get("status") || "完璧";
+    const status = url.searchParams.get("status") || "⚠️ 覚え中";
     const debug = url.searchParams.get("debug") === "1";
 
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
