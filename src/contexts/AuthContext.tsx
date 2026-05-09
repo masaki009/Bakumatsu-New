@@ -65,7 +65,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
     if (error) {
-      throw new Error('ログインとパスワードのいずれかが一致しません');
+      throw new Error('メールアドレスまたはパスワードが正しくありません');
     }
 
     if (data.user) {
@@ -76,13 +76,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .maybeSingle();
 
       if (admissionError) {
+        console.error('Admission check error:', admissionError);
         await supabase.auth.signOut();
-        throw new Error('認証情報の確認中にエラーが発生しました');
+        throw new Error(`受講者情報の確認中にエラーが発生しました (${admissionError.message})`);
       }
 
-      if (!admissionData || !admissionData.is_active) {
+      if (!admissionData) {
         await supabase.auth.signOut();
-        throw new Error('認められてないユーザーです。登録を最初に済ませてください');
+        throw new Error('このメールアドレスは受講者として登録されていません。管理者にお問い合わせください');
+      }
+
+      if (!admissionData.is_active) {
+        await supabase.auth.signOut();
+        throw new Error('アカウントが無効になっています。管理者にお問い合わせください');
       }
     }
   };
