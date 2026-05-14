@@ -14,23 +14,6 @@ interface Props {
   onBack: () => void;
 }
 
-function BallSVG({ size = 48, highlight = false }: { size?: number; highlight?: boolean }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 100 100"
-      xmlns="http://www.w3.org/2000/svg"
-      style={{ filter: highlight ? 'drop-shadow(0 0 8px #facc15)' : 'drop-shadow(0 2px 4px rgba(0,0,0,0.4))' }}
-    >
-      <circle cx="50" cy="50" r="46" fill="white" stroke="#e5e7eb" strokeWidth="2" />
-      <path d="M 20 35 Q 30 28 40 35 Q 50 42 60 35 Q 70 28 80 35" fill="none" stroke="#ef4444" strokeWidth="3.5" strokeLinecap="round" />
-      <path d="M 20 65 Q 30 72 40 65 Q 50 58 60 65 Q 70 72 80 65" fill="none" stroke="#ef4444" strokeWidth="3.5" strokeLinecap="round" />
-      <path d="M 35 20 Q 28 30 35 40 Q 42 50 35 60 Q 28 70 35 80" fill="none" stroke="#ef4444" strokeWidth="3.5" strokeLinecap="round" />
-      <path d="M 65 20 Q 72 30 65 40 Q 58 50 65 60 Q 72 70 65 80" fill="none" stroke="#ef4444" strokeWidth="3.5" strokeLinecap="round" />
-    </svg>
-  );
-}
 
 const SOURCE_LABELS: Record<NonNullable<SourceType>, string> = {
   notion_perfect: 'Notion：完璧',
@@ -364,7 +347,17 @@ export default function Audio100Knock({ onBack }: Props) {
                       : 'border-transparent hover:border-gray-300 hover:bg-gray-50'
                   }`}
                 >
-                  <BallSVG size={48} highlight={selectedIndex === i} />
+                  <img
+                    src="/ball.png"
+                    alt="ボール"
+                    className="w-12 h-12 object-contain"
+                    style={{
+                      filter: selectedIndex === i
+                        ? 'drop-shadow(0 0 8px #facc15)'
+                        : 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))',
+                    }}
+                    draggable={false}
+                  />
                   <span className="text-xs text-gray-700 text-center leading-tight line-clamp-2">
                     {file.name}
                   </span>
