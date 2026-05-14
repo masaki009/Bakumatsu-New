@@ -167,8 +167,8 @@ export default function Audio100Knock({ onBack }: Props) {
     setBatterSwing(true);
     setBallPosition({ x: 50, y: 15, scale: 0.2 });
 
-    // 2. アニメーション完了後に音声再生
-    await new Promise<void>((resolve) => setTimeout(resolve, 300));
+    // 2. ボールが上に到達してから音声再生（600msアニメーション完了を待つ）
+    await new Promise<void>((resolve) => setTimeout(resolve, 650));
 
     try {
       if (audioRef.current) {
@@ -494,9 +494,7 @@ export default function Audio100Knock({ onBack }: Props) {
                 left: `${ballPosition.x}%`,
                 bottom: `${ballPosition.y}%`,
                 transform: `translate(-50%, 50%) scale(${ballPosition.scale})`,
-                transition: isPlaying
-                  ? 'left 0.25s ease-out, bottom 0.25s ease-out, transform 0.25s ease-out'
-                  : 'left 0.4s ease-in, bottom 0.4s ease-in, transform 0.4s ease-in',
+                transition: 'left 0.6s ease-out, bottom 0.6s ease-out, transform 0.6s ease-out',
               }}
             >
               <img
