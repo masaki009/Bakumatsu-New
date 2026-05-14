@@ -521,6 +521,3 @@ export default function Audio100Knock({ onBack }: Props) {
     </div>
   );
 }
-
-
-export default Audio100Knock
