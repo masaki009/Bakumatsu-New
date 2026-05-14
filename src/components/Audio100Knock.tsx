@@ -179,9 +179,9 @@ export default function Audio100Knock({ onBack }: Props) {
     if (!file) return;
 
     setIsPlaying(true);
-    setBallPosition({ x: 50, y: 100, scale: 1 });
-    setTimeout(() => setBallPosition({ x: 50, y: 15, scale: 0.25 }), 50);
-    setTimeout(() => setBatterSwing(true), 600);
+    // ボールとバッターを同時に動かす
+    setBatterSwing(true);
+    setBallPosition({ x: 50, y: 15, scale: 0.2 });
 
     try {
       if (audioRef.current) {
@@ -492,11 +492,14 @@ export default function Audio100Knock({ onBack }: Props) {
             </div>
 
             <div
-              className="absolute transition-all duration-700 ease-in-out pointer-events-none"
+              className="absolute pointer-events-none"
               style={{
                 left: `${ballPosition.x}%`,
                 bottom: `${ballPosition.y}%`,
                 transform: `translate(-50%, 50%) scale(${ballPosition.scale})`,
+                transition: isPlaying
+                  ? 'left 0.25s ease-out, bottom 0.25s ease-out, transform 0.25s ease-out'
+                  : 'left 0.4s ease-in, bottom 0.4s ease-in, transform 0.4s ease-in',
               }}
             >
               <img
