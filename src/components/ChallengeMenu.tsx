@@ -23,7 +23,7 @@ const COLUMNS: Category[][] = [
     { title: 'ボキャブラリー', ids: ['baseball-vocabulary', 'vocabulary'] },
   ],
   [
-    { title: '空耳法　リスニング', ids: ['listening-practice', 'audio-memory', 'sound-change-chunk', 'sound-change-dictation', 'chunk'] },
+    { title: '空耳法　リスニング', ids: ['listening-practice', 'audio-100-knock', 'audio-memory', 'sound-change-chunk', 'sound-change-dictation', 'chunk'] },
   ],
 ];
 
