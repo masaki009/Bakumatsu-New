@@ -1,7 +1,9 @@
 import { useState, useRef } from 'react';
-import { ArrowLeft, RotateCcw, Play } from 'lucide-react';
+import { ArrowLeft, RotateCcw, Play, Loader2 } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 
-type Stage = 'file-select' | 'ball-select' | 'playing';
+type Stage = 'source-select' | 'ball-select' | 'playing';
+type SourceType = 'notion_perfect' | 'notion_review' | 'notion_learning' | 'github' | null;
 
 interface AudioFile {
   name: string;
@@ -30,29 +32,138 @@ function BallSVG({ size = 48, highlight = false }: { size?: number; highlight?: 
   );
 }
 
+const SOURCE_LABELS: Record<NonNullable<SourceType>, string> = {
+  notion_perfect: 'Notion：完璧',
+  notion_review: 'Notion：要復習',
+  notion_learning: 'Notion：覚え中',
+  github: 'センター',
+};
+
 export default function Audio100Knock({ onBack }: Props) {
-  const [stage, setStage] = useState<Stage>('file-select');
+  const [stage, setStage] = useState<Stage>('source-select');
   const [audioFiles, setAudioFiles] = useState<AudioFile[]>([]);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [count, setCount] = useState(0);
   const [ballPosition, setBallPosition] = useState({ x: 50, y: 100, scale: 1 });
   const [batterSwing, setBatterSwing] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+
+  const [selectedSource, setSelectedSource] = useState<SourceType>(null);
+  const [isLoadingSource, setIsLoadingSource] = useState(false);
+  const [sourceError, setSourceError] = useState<string | null>(null);
+
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files ?? []);
-    const items: AudioFile[] = files.map((file) => ({
-      name: file.name.replace(/\.[^/.]+$/, ''),
-      url: URL.createObjectURL(file),
-    }));
-    setAudioFiles(items);
+  const getValidSession = async () => {
+    const { data: refreshed } = await supabase.auth.refreshSession();
+    if (refreshed.session) return refreshed.session;
+    const { data: { session } } = await supabase.auth.getSession();
+    return session;
   };
 
-  const handleBallClickFileSelect = () => {
-    if (audioFiles.length === 0) return;
-    setStage('ball-select');
+  const loadNotionSource = async (status: string, sourceType: SourceType) => {
+    setIsLoadingSource(true);
+    setSourceError(null);
+    setSelectedSource(null);
+    setAudioFiles([]);
+
+    try {
+      const session = await getValidSession();
+      if (!session) {
+        setSourceError('ログインが必要です。');
+        setIsLoadingSource(false);
+        return;
+      }
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/audio-memory-source?status=${encodeURIComponent(status)}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      const responseData = await response.json().catch(() => ({ items: [] }));
+      const items: { audioUrl: string; engText: string }[] = responseData.items || [];
+
+      if (items.length === 0) {
+        setSourceError('データが見つかりませんでした。');
+        setIsLoadingSource(false);
+        return;
+      }
+
+      const files: AudioFile[] = items.map((item) => ({
+        name: item.engText,
+        url: item.audioUrl,
+      }));
+
+      setSelectedSource(sourceType);
+      setAudioFiles(files);
+    } catch (error) {
+      console.error('Source load error:', error);
+      setSourceError('データの取得中にエラーが発生しました。');
+    } finally {
+      setIsLoadingSource(false);
+    }
   };
+
+  const loadGithubSource = async () => {
+    setIsLoadingSource(true);
+    setSourceError(null);
+    setSelectedSource(null);
+    setAudioFiles([]);
+
+    try {
+      const session = await getValidSession();
+      if (!session) {
+        setSourceError('ログインが必要です。');
+        setIsLoadingSource(false);
+        return;
+      }
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/audio-memory-source?status=github`,
+        {
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      const responseData = await response.json().catch(() => ({ items: [] }));
+      const items: { audioUrl: string; engText: string }[] = responseData.items || [];
+
+      const files: AudioFile[] = items.length > 0
+        ? items.map((item) => ({ name: item.engText, url: item.audioUrl }))
+        : GITHUB_FALLBACK;
+
+      setSelectedSource('github');
+      setAudioFiles(files);
+    } catch {
+      setSelectedSource('github');
+      setAudioFiles(GITHUB_FALLBACK);
+    } finally {
+      setIsLoadingSource(false);
+    }
+  };
+
+  const GITHUB_FALLBACK: AudioFile[] = [
+    { name: 'Are you alright?', url: 'https://raw.githubusercontent.com/masaki009/test123/main/1.mp3' },
+    { name: 'May I help you?', url: 'https://raw.githubusercontent.com/masaki009/test123/main/2.mp3' },
+    { name: 'Are you lost?', url: 'https://raw.githubusercontent.com/masaki009/test123/main/3.mp3' },
+    { name: 'Where are you from?', url: 'https://raw.githubusercontent.com/masaki009/test123/main/4.mp3' },
+    { name: 'Is it your first time in Japan?', url: 'https://raw.githubusercontent.com/masaki009/test123/main/5.mp3' },
+    { name: 'How long are you staying in Japan?', url: 'https://raw.githubusercontent.com/masaki009/test123/main/6.mp3' },
+    { name: 'Where are you staying?', url: 'https://raw.githubusercontent.com/masaki009/test123/main/7.mp3' },
+    { name: 'Please enjoy your trip in Japan.', url: 'https://raw.githubusercontent.com/masaki009/test123/main/8.mp3' },
+    { name: 'Have you tried Monjayaki?', url: 'https://raw.githubusercontent.com/masaki009/test123/main/9.mp3' },
+    { name: 'Do you know where I can find ATM?', url: 'https://raw.githubusercontent.com/masaki009/test123/main/10.mp3' },
+    { name: 'Go down the street.', url: 'https://raw.githubusercontent.com/masaki009/test123/main/11.mp3' },
+    { name: 'Could you tell me how to get Tokyo station?', url: 'https://raw.githubusercontent.com/masaki009/test123/main/13.mp3' },
+  ];
 
   const handleStartPlaying = () => {
     if (selectedIndex === null) return;
@@ -107,8 +218,8 @@ export default function Audio100Knock({ onBack }: Props) {
 
   const countStr = String(count).padStart(3, '0');
 
-  // ---- Stage: file-select ----
-  if (stage === 'file-select') {
+  // ---- Stage: source-select ----
+  if (stage === 'source-select') {
     return (
       <div className="min-h-screen bg-gradient-to-b from-gray-900 via-green-900 to-green-800 flex flex-col">
         <header className="bg-white/10 backdrop-blur-sm border-b border-white/20">
@@ -125,44 +236,83 @@ export default function Audio100Knock({ onBack }: Props) {
           </div>
         </header>
 
-        <main className="flex-1 flex items-center justify-center p-6">
+        <main className="flex-1 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-2xl w-full">
-            <h2 className="text-xl font-bold text-gray-800 mb-2">音声ファイルを選ぶ</h2>
-            <p className="text-sm text-gray-500 mb-6">複数の音声ファイルを選択できます</p>
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">データソースを選ぶ</h2>
+            <p className="text-sm text-gray-500 mb-6">再生する音声のソースを選択してください</p>
 
-            <label className="flex flex-col items-center justify-center w-full h-36 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-green-500 hover:bg-green-50 transition-colors group">
-              <div className="flex flex-col items-center gap-2 text-gray-400 group-hover:text-green-600 transition-colors">
-                <BallSVG size={40} />
-                <span className="text-sm font-medium">クリックして音声ファイルを選択</span>
-                <span className="text-xs text-gray-400">MP3, WAV, M4A など</span>
+            {sourceError && (
+              <div className="mb-4 px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+                {sourceError}
               </div>
-              <input
-                type="file"
-                accept="audio/*"
-                multiple
-                className="hidden"
-                onChange={handleFileChange}
-              />
-            </label>
+            )}
 
-            {audioFiles.length > 0 && (
-              <>
-                <div className="mt-6 grid grid-cols-3 sm:grid-cols-4 gap-4">
-                  {audioFiles.map((file, i) => (
-                    <div key={i} className="flex flex-col items-center gap-2">
-                      <BallSVG size={52} />
-                      <span className="text-xs text-gray-600 text-center leading-tight break-all line-clamp-2">
-                        {file.name}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-
+            {isLoadingSource ? (
+              <div className="flex flex-col items-center justify-center py-12 gap-3">
+                <Loader2 size={40} className="animate-spin text-green-600" />
+                <p className="text-gray-600">Notionからデータを取得中...</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-4">
                 <button
-                  onClick={handleBallClickFileSelect}
-                  className="mt-8 w-full py-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold text-lg rounded-xl shadow-lg transition-all hover:scale-105 active:scale-100"
+                  onClick={() => loadNotionSource('完璧', 'notion_perfect')}
+                  disabled={isLoadingSource}
+                  className={`py-5 px-4 rounded-xl font-bold text-white text-lg transition-all duration-200 shadow-md hover:shadow-lg hover:-translate-y-0.5 ${
+                    selectedSource === 'notion_perfect'
+                      ? 'bg-amber-500 ring-2 ring-amber-400 ring-offset-1'
+                      : 'bg-amber-400 hover:bg-amber-500'
+                  }`}
                 >
-                  次へ（{audioFiles.length}件）
+                  Notion：完璧
+                </button>
+                <button
+                  onClick={() => loadNotionSource('要復習', 'notion_review')}
+                  disabled={isLoadingSource}
+                  className={`py-5 px-4 rounded-xl font-bold text-white text-lg transition-all duration-200 shadow-md hover:shadow-lg hover:-translate-y-0.5 ${
+                    selectedSource === 'notion_review'
+                      ? 'bg-sky-500 ring-2 ring-sky-400 ring-offset-1'
+                      : 'bg-sky-400 hover:bg-sky-500'
+                  }`}
+                >
+                  Notion：要復習
+                </button>
+                <button
+                  onClick={() => loadNotionSource('覚え中', 'notion_learning')}
+                  disabled={isLoadingSource}
+                  className={`py-5 px-4 rounded-xl font-bold text-white text-lg transition-all duration-200 shadow-md hover:shadow-lg hover:-translate-y-0.5 ${
+                    selectedSource === 'notion_learning'
+                      ? 'bg-teal-500 ring-2 ring-teal-400 ring-offset-1'
+                      : 'bg-teal-400 hover:bg-teal-500'
+                  }`}
+                >
+                  Notion：覚え中
+                </button>
+                <button
+                  onClick={loadGithubSource}
+                  disabled={isLoadingSource}
+                  className={`py-5 px-4 rounded-xl font-bold text-white text-lg transition-all duration-200 shadow-md hover:shadow-lg hover:-translate-y-0.5 ${
+                    selectedSource === 'github'
+                      ? 'bg-green-600 ring-2 ring-green-400 ring-offset-1'
+                      : 'bg-green-500 hover:bg-green-600'
+                  }`}
+                >
+                  センター
+                </button>
+              </div>
+            )}
+
+            {selectedSource && audioFiles.length > 0 && !isLoadingSource && (
+              <>
+                <div className="mt-5 px-4 py-2 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700">
+                  <span className="font-semibold">{SOURCE_LABELS[selectedSource]}</span>
+                  {' '}を選択中 — {audioFiles.length}件取得
+                </div>
+                <button
+                  onClick={() => setStage('ball-select')}
+                  className="mt-4 w-full py-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold text-lg rounded-xl shadow-lg transition-all hover:scale-105 active:scale-100 flex items-center justify-center gap-2"
+                >
+                  <Play size={20} />
+                  次へ
                 </button>
               </>
             )}
@@ -179,7 +329,7 @@ export default function Audio100Knock({ onBack }: Props) {
         <header className="bg-white/10 backdrop-blur-sm border-b border-white/20">
           <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
             <button
-              onClick={() => setStage('file-select')}
+              onClick={() => { setSelectedIndex(null); setStage('source-select'); }}
               className="flex items-center gap-2 px-4 py-2 text-white hover:bg-white/20 rounded-lg transition-colors"
             >
               <ArrowLeft size={20} />
@@ -192,10 +342,14 @@ export default function Audio100Knock({ onBack }: Props) {
 
         <main className="flex-1 flex items-center justify-center p-6">
           <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-2xl w-full">
-            <h2 className="text-xl font-bold text-gray-800 mb-2">再生する音声を選ぶ</h2>
-            <p className="text-sm text-gray-500 mb-6">ボールをクリックして選択してください</p>
+            <h2 className="text-xl font-bold text-gray-800 mb-1">再生する音声を選ぶ</h2>
+            {selectedSource && (
+              <p className="text-xs text-gray-500 mb-4">
+                {SOURCE_LABELS[selectedSource]} — {audioFiles.length}件
+              </p>
+            )}
 
-            <div className="grid grid-cols-3 sm:grid-cols-4 gap-4 mb-8">
+            <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 mb-8 max-h-80 overflow-y-auto pr-1">
               {audioFiles.map((file, i) => (
                 <button
                   key={i}
@@ -206,8 +360,8 @@ export default function Audio100Knock({ onBack }: Props) {
                       : 'border-transparent hover:border-gray-300 hover:bg-gray-50'
                   }`}
                 >
-                  <BallSVG size={52} highlight={selectedIndex === i} />
-                  <span className="text-xs text-gray-700 text-center leading-tight break-all line-clamp-2">
+                  <BallSVG size={48} highlight={selectedIndex === i} />
+                  <span className="text-xs text-gray-700 text-center leading-tight line-clamp-2">
                     {file.name}
                   </span>
                 </button>
@@ -216,13 +370,11 @@ export default function Audio100Knock({ onBack }: Props) {
 
             <div className="flex gap-3">
               <button
-                onClick={() => setStage('file-select')}
-                className="flex-1 py-3 border border-gray-300 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition-colors"
+                onClick={() => { setSelectedIndex(null); setStage('source-select'); }}
+                className="flex-1 py-3 border border-gray-300 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
               >
-                <span className="flex items-center justify-center gap-2">
-                  <RotateCcw size={16} />
-                  ファイル選択に戻る
-                </span>
+                <RotateCcw size={16} />
+                ソース選択へ戻る
               </button>
               <button
                 onClick={handleStartPlaying}
@@ -311,7 +463,7 @@ export default function Audio100Knock({ onBack }: Props) {
           {selectedIndex !== null && audioFiles[selectedIndex] && (
             <div className="mt-4 px-2 py-2 bg-black/30 rounded-lg border border-white/10 w-full">
               <p
-                className="text-xs text-center leading-tight break-all"
+                className="text-xs text-center leading-tight break-all line-clamp-3"
                 style={{ color: '#86efac', fontFamily: "'Courier New', monospace" }}
               >
                 {audioFiles[selectedIndex].name}
@@ -323,7 +475,6 @@ export default function Audio100Knock({ onBack }: Props) {
         {/* Baseball field */}
         <div className="flex-1 relative flex items-center justify-center">
           <div className="relative w-full max-w-2xl h-[500px]">
-            {/* Batter */}
             <div
               className="absolute inset-0 flex items-center justify-center cursor-pointer select-none"
               onClick={handleBatterClick}
@@ -340,7 +491,6 @@ export default function Audio100Knock({ onBack }: Props) {
               />
             </div>
 
-            {/* Ball */}
             <div
               className="absolute transition-all duration-700 ease-in-out pointer-events-none"
               style={{
@@ -359,7 +509,6 @@ export default function Audio100Knock({ onBack }: Props) {
             </div>
           </div>
 
-          {/* Hint */}
           <div className="absolute bottom-6 left-0 right-0 flex justify-center">
             <div className="bg-black/30 backdrop-blur-sm rounded-lg px-5 py-2 border border-white/10">
               <p className="text-white/70 text-sm text-center">
@@ -369,13 +518,9 @@ export default function Audio100Knock({ onBack }: Props) {
           </div>
         </div>
       </div>
-
-      <style>{`
-        @keyframes fadeIn {
-          from { opacity: 0; transform: scale(0.9); }
-          to { opacity: 1; transform: scale(1); }
-        }
-      `}</style>
     </div>
   );
 }
+
+
+export default Audio100Knock
