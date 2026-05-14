@@ -179,9 +179,13 @@ export default function Audio100Knock({ onBack }: Props) {
     if (!file) return;
 
     setIsPlaying(true);
-    // ボールとバッターを同時に動かす
+
+    // 1. スイング＆ボール飛翔アニメーション（0.25秒）
     setBatterSwing(true);
     setBallPosition({ x: 50, y: 15, scale: 0.2 });
+
+    // 2. アニメーション完了後に音声再生
+    await new Promise<void>((resolve) => setTimeout(resolve, 300));
 
     try {
       if (audioRef.current) {
