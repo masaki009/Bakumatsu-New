@@ -163,13 +163,17 @@ export default function Audio100Knock({ onBack }: Props) {
 
     setIsPlaying(true);
 
-    // 1. スイング＆ボール飛翔アニメーション（0.25秒）
+    // 1. スイング＆ボール飛翔アニメーション（300ms）
     setBatterSwing(true);
     setBallPosition({ x: 50, y: 15, scale: 0.2 });
 
-    // 2. ボールが上に到達してから音声再生（600msアニメーション完了を待つ）
-    await new Promise<void>((resolve) => setTimeout(resolve, 650));
+    // 2. 飛翔アニメーション完了を待つ
+    await new Promise<void>((resolve) => setTimeout(resolve, 300));
 
+    // 3. ボールを元の位置に戻す
+    setBallPosition({ x: 50, y: 100, scale: 1 });
+
+    // 4. 待機なしで音声再生開始
     try {
       if (audioRef.current) {
         audioRef.current.pause();
@@ -182,12 +186,10 @@ export default function Audio100Knock({ onBack }: Props) {
       audio.onended = () => {
         setIsPlaying(false);
         setBatterSwing(false);
-        setBallPosition({ x: 50, y: 100, scale: 1 });
       };
     } catch {
       setIsPlaying(false);
       setBatterSwing(false);
-      setBallPosition({ x: 50, y: 100, scale: 1 });
     }
   };
 
@@ -494,7 +496,7 @@ export default function Audio100Knock({ onBack }: Props) {
                 left: `${ballPosition.x}%`,
                 bottom: `${ballPosition.y}%`,
                 transform: `translate(-50%, 50%) scale(${ballPosition.scale})`,
-                transition: 'left 0.6s ease-out, bottom 0.6s ease-out, transform 0.6s ease-out',
+                transition: 'left 0.3s ease-out, bottom 0.3s ease-out, transform 0.3s ease-out',
               }}
             >
               <img
