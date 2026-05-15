@@ -1,6 +1,134 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { ArrowLeft, RotateCcw, Play, Loader2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+
+// ---- Fireworks ----
+interface Particle {
+  id: number;
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  color: string;
+  alpha: number;
+  size: number;
+}
+
+interface FireworkBurst {
+  id: number;
+  x: number;
+  y: number;
+  color: string;
+}
+
+const COLORS = ['#ff4444', '#ff9900', '#ffdd00', '#44ff88', '#44ccff', '#ff44cc', '#ffffff', '#ff6644'];
+
+function Fireworks({ active, label }: { active: boolean; label: string }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const particlesRef = useRef<Particle[]>([]);
+  const burstsRef = useRef<FireworkBurst[]>([]);
+  const frameRef = useRef<number>(0);
+  const burstTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const nextIdRef = useRef(0);
+
+  useEffect(() => {
+    if (!active) {
+      cancelAnimationFrame(frameRef.current);
+      if (burstTimerRef.current) clearInterval(burstTimerRef.current);
+      particlesRef.current = [];
+      burstsRef.current = [];
+      const canvas = canvasRef.current;
+      if (canvas) {
+        const ctx = canvas.getContext('2d');
+        ctx?.clearRect(0, 0, canvas.width, canvas.height);
+      }
+      return;
+    }
+
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    const ctx = canvas.getContext('2d')!;
+
+    const spawnBurst = () => {
+      const x = Math.random() * canvas.width;
+      const y = Math.random() * canvas.height * 0.65 + canvas.height * 0.05;
+      const color = COLORS[Math.floor(Math.random() * COLORS.length)];
+      const count = 60 + Math.floor(Math.random() * 40);
+      for (let i = 0; i < count; i++) {
+        const angle = (Math.PI * 2 * i) / count + Math.random() * 0.3;
+        const speed = 2 + Math.random() * 4;
+        particlesRef.current.push({
+          id: nextIdRef.current++,
+          x, y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          color,
+          alpha: 1,
+          size: 2 + Math.random() * 3,
+        });
+      }
+    };
+
+    // initial burst right away
+    for (let i = 0; i < 5; i++) setTimeout(spawnBurst, i * 200);
+    burstTimerRef.current = setInterval(spawnBurst, 400);
+
+    const draw = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particlesRef.current = particlesRef.current.filter((p) => p.alpha > 0.02);
+      for (const p of particlesRef.current) {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.06; // gravity
+        p.vx *= 0.98;
+        p.alpha -= 0.018;
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, p.alpha);
+        ctx.fillStyle = p.color;
+        ctx.shadowColor = p.color;
+        ctx.shadowBlur = 6;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+      frameRef.current = requestAnimationFrame(draw);
+    };
+    frameRef.current = requestAnimationFrame(draw);
+
+    return () => {
+      cancelAnimationFrame(frameRef.current);
+      if (burstTimerRef.current) clearInterval(burstTimerRef.current);
+    };
+  }, [active]);
+
+  if (!active) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 pointer-events-none">
+      <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" />
+      <div
+        className="absolute inset-0 flex items-center justify-center"
+        style={{ animation: 'fireworkText 3s ease forwards' }}
+      >
+        <div
+          className="text-center select-none"
+          style={{
+            textShadow: '0 0 20px #fff, 0 0 40px #facc15',
+            animation: 'fireworkText 3s ease forwards',
+          }}
+        >
+          <div className="text-7xl font-black text-yellow-300" style={{ textShadow: '0 0 30px #f59e0b, 0 4px 8px rgba(0,0,0,0.8)' }}>
+            {label}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+// ---- End Fireworks ----
 
 type Stage = 'source-select' | 'ball-select' | 'playing';
 type SourceType = 'notion_perfect' | 'notion_review' | 'notion_learning' | 'github' | null;
@@ -30,6 +158,8 @@ export default function Audio100Knock({ onBack }: Props) {
   const [ballPosition, setBallPosition] = useState({ x: 50, y: 100, scale: 1 });
   const [batterSwing, setBatterSwing] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [showFireworks, setShowFireworks] = useState(false);
+  const [fireworksLabel, setFireworksLabel] = useState('');
 
   const [selectedSource, setSelectedSource] = useState<SourceType>(null);
   const [isLoadingSource, setIsLoadingSource] = useState(false);
@@ -182,7 +312,15 @@ export default function Audio100Knock({ onBack }: Props) {
       const audio = new Audio(file.url);
       audioRef.current = audio;
       await audio.play();
-      setCount((prev) => prev + 1);
+      setCount((prev) => {
+        const next = prev + 1;
+        if (next > 0 && next % 10 === 0) {
+          setFireworksLabel(`${next}本達成!`);
+          setShowFireworks(true);
+          setTimeout(() => setShowFireworks(false), 3000);
+        }
+        return next;
+      });
       audio.onended = () => {
         setIsPlaying(false);
         setBatterSwing(false);
@@ -392,6 +530,8 @@ export default function Audio100Knock({ onBack }: Props) {
 
   // ---- Stage: playing ----
   return (
+    <>
+    <Fireworks active={showFireworks} label={fireworksLabel} />
     <div
       className="min-h-screen relative overflow-hidden flex flex-col"
       style={{ background: 'linear-gradient(170deg, #1a3a2a 0%, #0f5c3a 45%, #0a3f28 100%)' }}
@@ -519,5 +659,6 @@ export default function Audio100Knock({ onBack }: Props) {
         </div>
       </div>
     </div>
+    </>
   );
 }
