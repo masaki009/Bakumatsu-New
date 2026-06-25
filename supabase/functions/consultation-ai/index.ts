@@ -113,6 +113,8 @@ Deno.serve(async (req: Request) => {
       content: msg.content,
     }));
 
+    console.log(`[DEBUG] API key length: ${anthropicApiKey.length}, first4: ${anthropicApiKey.slice(0, 4)}, last4: ${anthropicApiKey.slice(-4)}`);
+
     const response = await callAnthropic(anthropicApiKey, {
       max_tokens: 2048,
       system: systemPrompt,
