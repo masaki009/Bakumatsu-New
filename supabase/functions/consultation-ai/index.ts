@@ -1,10 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
-};
+import { handleCors, jsonResponse, errorResponse } from "../_shared/cors.ts";
+import { getAnthropicApiKey, callAnthropic, extractText } from "../_shared/anthropic.ts";
 
 interface Message {
   role: string;
@@ -37,42 +33,22 @@ interface RequestBody {
 }
 
 Deno.serve(async (req: Request) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, {
-      status: 200,
-      headers: corsHeaders,
-    });
-  }
+  const corsResponse = handleCors(req);
+  if (corsResponse) return corsResponse;
 
   try {
     const body = await req.json();
-    console.log("Received request body:", JSON.stringify(body, null, 2));
-
-    const { messages, type, userId, anthropicApiKey: providedApiKey, coachProfile, selfProfile }: RequestBody = body;
+    const { messages, type, anthropicApiKey: providedApiKey, coachProfile, selfProfile }: RequestBody = body;
 
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
-      console.error("Invalid messages:", messages);
-      return new Response(
-        JSON.stringify({ error: "Messages array is required" }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
+      return errorResponse("Messages array is required", 400);
     }
 
-    const anthropicApiKey = providedApiKey || Deno.env.get("ANTHROPIC_API_KEY");
+    const anthropicApiKey = providedApiKey || getAnthropicApiKey();
     if (!anthropicApiKey) {
-      return new Response(
-        JSON.stringify({ error: "ANTHROPIC_API_KEY not configured" }),
-        {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
+      return errorResponse("ANTHROPIC_API_KEY not configured");
     }
 
-    // プロフィール情報に基づいたシステムプロンプトを生成
     let systemPrompt = '';
 
     if (type === 'general') {
@@ -94,7 +70,6 @@ Deno.serve(async (req: Request) => {
 - ポジティブで励ましの言葉を含める
 - 日本語で自然な会話を心がける`;
     } else {
-      // 英文・文法・添削相談用のシステムプロンプト
       systemPrompt = `あなたは英語学習のエキスパートチューターです。英文法の添削と英文の改善提案を行ってください。
 
 主な対応範囲:
@@ -104,33 +79,22 @@ Deno.serve(async (req: Request) => {
 - 文章構造の改善アドバイス
 - スタイルとトーンの調整提案`;
 
-      // 学習者プロフィール情報を追加
       if (selfProfile) {
         systemPrompt += `\n\n## 学習者プロフィール\n`;
         systemPrompt += `- 名前: ${selfProfile.name}\n`;
         systemPrompt += `- 現在のレベル: ${selfProfile.current_level}\n`;
-        if (selfProfile.target) {
-          systemPrompt += `- 学習目標: ${selfProfile.target}\n`;
-        }
-        if (selfProfile.by_when) {
-          systemPrompt += `- 目標達成期限: ${selfProfile.by_when}\n`;
-        }
-        if (selfProfile.problem) {
-          systemPrompt += `- 現在の課題: ${selfProfile.problem}\n`;
-        }
-        if (selfProfile.study_type) {
-          systemPrompt += `- 学習ペース: ${selfProfile.study_type}\n`;
-        }
+        if (selfProfile.target) systemPrompt += `- 学習目標: ${selfProfile.target}\n`;
+        if (selfProfile.by_when) systemPrompt += `- 目標達成期限: ${selfProfile.by_when}\n`;
+        if (selfProfile.problem) systemPrompt += `- 現在の課題: ${selfProfile.problem}\n`;
+        if (selfProfile.study_type) systemPrompt += `- 学習ペース: ${selfProfile.study_type}\n`;
       }
 
-      // コーチプロフィール情報を追加
       if (coachProfile) {
         systemPrompt += `\n\n## あなたの英語講師（チューター）設定\n`;
         systemPrompt += `- 人格スタイル: ${coachProfile.type}\n`;
         systemPrompt += `- フィードバック詳細度: ${coachProfile.character}\n`;
         systemPrompt += `- 間違い指摘方法: ${coachProfile.target}\n`;
         systemPrompt += `- 話し方スタイル: ${coachProfile.speaking}\n`;
-
         systemPrompt += `\n上記のチューター設定に従って、学習者に最適なフィードバックを提供してください。`;
       }
 
@@ -145,60 +109,25 @@ Deno.serve(async (req: Request) => {
     }
 
     const anthropicMessages = messages.map(msg => ({
-      role: msg.role === 'user' ? 'user' : 'assistant',
-      content: msg.content
+      role: msg.role === 'user' ? 'user' : 'assistant' as "user" | "assistant",
+      content: msg.content,
     }));
 
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": anthropicApiKey,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-6",
-        max_tokens: 2048,
-        system: systemPrompt,
-        messages: anthropicMessages,
-      }),
+    const response = await callAnthropic(anthropicApiKey, {
+      max_tokens: 2048,
+      system: systemPrompt,
+      messages: anthropicMessages,
     });
 
     if (!response.ok) {
       const error = await response.text();
-      console.error("Anthropic API error status:", response.status);
-      console.error("Anthropic API error body:", error);
-      return new Response(
-        JSON.stringify({
-          error: "Failed to get AI response",
-          details: `Status: ${response.status}`,
-          anthropicError: error
-        }),
-        {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
+      return jsonResponse({ error: "Failed to get AI response", details: `Status: ${response.status}`, anthropicError: error }, 500);
     }
 
     const data = await response.json();
-    const aiMessage = data.content[0].text;
-
-    return new Response(
-      JSON.stringify({ message: aiMessage }),
-      {
-        status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
-    );
+    return jsonResponse({ message: extractText(data) });
   } catch (error) {
     console.error("Error in consultation-ai function:", error);
-    return new Response(
-      JSON.stringify({ error: "Internal server error" }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
-    );
+    return errorResponse("Internal server error");
   }
 });

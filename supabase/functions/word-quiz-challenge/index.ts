@@ -1,10 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
-};
+import { handleCors, jsonResponse, errorResponse } from "../_shared/cors.ts";
+import { getAnthropicApiKey, callAnthropic, extractText } from "../_shared/anthropic.ts";
 
 interface RequestBody {
   japanese: string;
@@ -13,26 +9,19 @@ interface RequestBody {
 }
 
 Deno.serve(async (req: Request) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { status: 200, headers: corsHeaders });
-  }
+  const corsResponse = handleCors(req);
+  if (corsResponse) return corsResponse;
 
   try {
     const { japanese, correctEnglish, userEnglish }: RequestBody = await req.json();
 
     if (!japanese || !correctEnglish || !userEnglish) {
-      return new Response(
-        JSON.stringify({ error: "japanese, correctEnglish, userEnglish are required" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return errorResponse("japanese, correctEnglish, userEnglish are required", 400);
     }
 
-    const anthropicApiKey = Deno.env.get("ANTHROPIC_API_KEY");
+    const anthropicApiKey = getAnthropicApiKey();
     if (!anthropicApiKey) {
-      return new Response(
-        JSON.stringify({ error: "ANTHROPIC_API_KEY not configured" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return errorResponse("ANTHROPIC_API_KEY not configured");
     }
 
     const prompt = `あなたは英語教師です。生徒が書いた英文を以下の観点で日本語でフィードバックしてください。
@@ -54,40 +43,21 @@ ${userEnglish}
 
 フィードバックは丁寧かつ具体的に、200〜350字程度の日本語で書いてください。`;
 
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": anthropicApiKey,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-6",
-        max_tokens: 1024,
-        messages: [{ role: "user", content: prompt }],
-      }),
+    const response = await callAnthropic(anthropicApiKey, {
+      max_tokens: 1024,
+      messages: [{ role: "user", content: prompt }],
     });
 
     if (!response.ok) {
       const error = await response.text();
-      return new Response(
-        JSON.stringify({ error: "Anthropic API error", details: error }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return errorResponse(`Anthropic API error: ${error}`);
     }
 
     const data = await response.json();
-    const feedback: string = data.content[0].text;
-
-    return new Response(
-      JSON.stringify({ feedback }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    const feedback: string = extractText(data);
+    return jsonResponse({ feedback });
   } catch (error) {
     console.error("Error in word-quiz-challenge:", error);
-    return new Response(
-      JSON.stringify({ error: "Internal server error" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return errorResponse("Internal server error");
   }
 });

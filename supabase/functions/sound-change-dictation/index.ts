@@ -1,10 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
-};
+import { handleCors, jsonResponse, errorResponse } from "../_shared/cors.ts";
+import { getAnthropicApiKey, callAnthropic, extractText } from "../_shared/anthropic.ts";
 
 interface RequestBody {
   level: string;
@@ -61,26 +57,19 @@ function pickTopics(count: number): string[] {
 }
 
 Deno.serve(async (req: Request) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { status: 200, headers: corsHeaders });
-  }
+  const corsResponse = handleCors(req);
+  if (corsResponse) return corsResponse;
 
   try {
     const { level, type }: RequestBody = await req.json();
 
     if (!level || !type) {
-      return new Response(
-        JSON.stringify({ error: "level and type are required" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return errorResponse("level and type are required", 400);
     }
 
-    const anthropicApiKey = Deno.env.get("ANTHROPIC_API_KEY");
+    const anthropicApiKey = getAnthropicApiKey();
     if (!anthropicApiKey) {
-      return new Response(
-        JSON.stringify({ error: "ANTHROPIC_API_KEY not configured" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return errorResponse("ANTHROPIC_API_KEY not configured");
     }
 
     const levelDesc = LEVEL_DESCRIPTIONS[level] || level;
@@ -130,45 +119,26 @@ Rules for soundChanges array:
 - Each item must reference a specific phrase from the sentence
 - Return exactly 3 questions`;
 
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": anthropicApiKey,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
-        max_tokens: 3500,
-        temperature: 1,
-        system: "You are an expert English phonetics teacher specializing in dictation exercises for Japanese learners. Generate authentic, varied dictation sentences that clearly demonstrate connected speech sound changes. Always respond with valid JSON only, no markdown fences.",
-        messages: [{ role: "user", content: prompt }],
-      }),
+    const response = await callAnthropic(anthropicApiKey, {
+      max_tokens: 3500,
+      temperature: 1,
+      system: "You are an expert English phonetics teacher specializing in dictation exercises for Japanese learners. Generate authentic, varied dictation sentences that clearly demonstrate connected speech sound changes. Always respond with valid JSON only, no markdown fences.",
+      messages: [{ role: "user", content: prompt }],
     });
 
     if (!response.ok) {
       const error = await response.text();
-      return new Response(
-        JSON.stringify({ error: "Anthropic API error", details: error }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return errorResponse(`Anthropic API error: ${error}`);
     }
 
     const data = await response.json();
-    let rawText: string = data.content[0].text;
+    let rawText: string = extractText(data);
     rawText = rawText.replace(/^```json\s*/i, "").replace(/\s*```$/i, "").trim();
 
     const parsed = JSON.parse(rawText);
-
-    return new Response(
-      JSON.stringify(parsed),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return jsonResponse(parsed);
   } catch (error) {
     console.error("Error:", error);
-    return new Response(
-      JSON.stringify({ error: "Internal server error" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return errorResponse("Internal server error");
   }
 });

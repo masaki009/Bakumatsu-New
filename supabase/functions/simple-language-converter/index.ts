@@ -1,10 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
-};
+import { handleCors, jsonResponse, errorResponse } from "../_shared/cors.ts";
+import { getAnthropicApiKey, callAnthropic, extractText } from "../_shared/anthropic.ts";
 
 interface SimplifiedJapanese {
   japanese: string;
@@ -35,36 +31,20 @@ interface RequestBody {
 }
 
 Deno.serve(async (req: Request) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, {
-      status: 200,
-      headers: corsHeaders,
-    });
-  }
+  const corsResponse = handleCors(req);
+  if (corsResponse) return corsResponse;
 
   try {
     const body = await req.json();
     const { action, input, anthropicApiKey: providedApiKey }: RequestBody = body;
 
     if (!action || !input) {
-      return new Response(
-        JSON.stringify({ error: "Action and input are required" }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
+      return errorResponse("Action and input are required", 400);
     }
 
-    const anthropicApiKey = providedApiKey || Deno.env.get("ANTHROPIC_API_KEY");
+    const anthropicApiKey = providedApiKey || getAnthropicApiKey();
     if (!anthropicApiKey) {
-      return new Response(
-        JSON.stringify({ error: "ANTHROPIC_API_KEY not configured" }),
-        {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
+      return errorResponse("ANTHROPIC_API_KEY not configured");
     }
 
     let systemPrompt = "";
@@ -105,97 +85,40 @@ If multiple inputs are provided, return an array of such objects. ONLY respond w
       const inputs = Array.isArray(input) ? input : [input];
       userPrompt = `以下の日本語を簡単な英語に変換してください:\n${inputs.map((i, idx) => `${idx + 1}. ${i}`).join('\n')}`;
     } else {
-      return new Response(
-        JSON.stringify({ error: "Invalid action. Must be 'japanese-simplify' or 'english-convert'" }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
+      return errorResponse("Invalid action. Must be 'japanese-simplify' or 'english-convert'", 400);
     }
 
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": anthropicApiKey,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
-        max_tokens: 4096,
-        system: systemPrompt,
-        messages: [
-          {
-            role: "user",
-            content: userPrompt
-          }
-        ],
-      }),
+    const response = await callAnthropic(anthropicApiKey, {
+      max_tokens: 4096,
+      system: systemPrompt,
+      messages: [{ role: "user", content: userPrompt }],
     });
 
     if (!response.ok) {
       const error = await response.text();
-      console.error("Anthropic API error status:", response.status);
-      console.error("Anthropic API error body:", error);
-      return new Response(
-        JSON.stringify({
-          error: "Failed to get AI response",
-          details: `Status: ${response.status}`,
-          anthropicError: error
-        }),
-        {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
+      return jsonResponse({ error: "Failed to get AI response", details: `Status: ${response.status}`, anthropicError: error }, 500);
     }
 
     const data = await response.json();
-    const aiResponse = data.content[0].text;
+    const aiResponse = extractText(data);
 
-    let parsedResponse;
+    let parsedResponse: unknown;
     try {
       parsedResponse = JSON.parse(aiResponse);
-    } catch (parseError) {
-      console.error("Failed to parse AI response as JSON:", aiResponse);
-      return new Response(
-        JSON.stringify({ error: "Invalid JSON response from AI", raw: aiResponse }),
-        {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
+    } catch {
+      return jsonResponse({ error: "Invalid JSON response from AI", raw: aiResponse }, 500);
     }
 
     const inputArray = Array.isArray(input) ? input : [input];
     const results = Array.isArray(parsedResponse) ? parsedResponse : [parsedResponse];
 
     if (inputArray.length === 1) {
-      return new Response(
-        JSON.stringify(results[0]),
-        {
-          status: 200,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
+      return jsonResponse(results[0]);
     } else {
-      return new Response(
-        JSON.stringify(results),
-        {
-          status: 200,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
+      return jsonResponse(results);
     }
   } catch (error) {
     console.error("Error in simple-language-converter function:", error);
-    return new Response(
-      JSON.stringify({ error: "Internal server error", details: error.message }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
-    );
+    return jsonResponse({ error: "Internal server error", details: error.message }, 500);
   }
 });

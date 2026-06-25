@@ -1,10 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
-};
+import { handleCors, jsonResponse, errorResponse } from "../_shared/cors.ts";
+import { getAnthropicApiKey, callAnthropic, extractText } from "../_shared/anthropic.ts";
 
 const THEME_PROMPTS: Record<string, string> = {
   daily: "everyday life situations: commuting, home life, neighborhood interactions, small personal stories",
@@ -14,26 +10,19 @@ const THEME_PROMPTS: Record<string, string> = {
 };
 
 Deno.serve(async (req: Request) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { status: 200, headers: corsHeaders });
-  }
+  const corsResponse = handleCors(req);
+  if (corsResponse) return corsResponse;
 
   try {
     const { theme } = await req.json();
 
     if (!theme || !THEME_PROMPTS[theme]) {
-      return new Response(
-        JSON.stringify({ error: "Valid theme is required: daily, travel, work, or food" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return errorResponse("Valid theme is required: daily, travel, work, or food", 400);
     }
 
-    const anthropicApiKey = Deno.env.get("ANTHROPIC_API_KEY");
+    const anthropicApiKey = getAnthropicApiKey();
     if (!anthropicApiKey) {
-      return new Response(
-        JSON.stringify({ error: "ANTHROPIC_API_KEY not configured" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return errorResponse("ANTHROPIC_API_KEY not configured");
     }
 
     const themeDescription = THEME_PROMPTS[theme];
@@ -58,54 +47,33 @@ OUTPUT — respond with valid JSON only, no markdown fences:
   ]
 }`;
 
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": anthropicApiKey,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
-        max_tokens: 1024,
-        system: `You are an English reading practice content generator for Japanese learners.
+    const response = await callAnthropic(anthropicApiKey, {
+      max_tokens: 1024,
+      system: `You are an English reading practice content generator for Japanese learners.
 Generate natural, engaging passages split into phrase chunks suitable for slash reading practice.
 Each chunk should be a meaningful phrase that can be understood independently.
 Respond with valid JSON only, no markdown.`,
-        messages: [{ role: "user", content: userPrompt }],
-      }),
+      messages: [{ role: "user", content: userPrompt }],
     });
 
     if (!response.ok) {
       const error = await response.text();
-      return new Response(
-        JSON.stringify({ error: "Anthropic API error", details: error }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return errorResponse(`Anthropic API error: ${error}`);
     }
 
     const data = await response.json();
-    let rawText: string = data.content[0].text;
+    let rawText: string = extractText(data);
     rawText = rawText.replace(/^```json\s*/i, "").replace(/\s*```$/i, "").trim();
 
     const parsed = JSON.parse(rawText);
 
     if (!parsed.chunks || !Array.isArray(parsed.chunks) || parsed.chunks.length < 4) {
-      return new Response(
-        JSON.stringify({ error: "Invalid passage generated. Please retry." }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return errorResponse("Invalid passage generated. Please retry.");
     }
 
-    return new Response(
-      JSON.stringify({ chunks: parsed.chunks }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return jsonResponse({ chunks: parsed.chunks });
   } catch (error) {
     console.error("Error in slash-reading-ai:", error);
-    return new Response(
-      JSON.stringify({ error: "Internal server error" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return errorResponse("Internal server error");
   }
 });

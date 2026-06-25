@@ -1,10 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
-};
+import { handleCors, jsonResponse, errorResponse } from "../_shared/cors.ts";
+import { getAnthropicApiKey, callAnthropic, extractText } from "../_shared/anthropic.ts";
 
 interface RequestBody {
   genre: string;
@@ -18,19 +14,15 @@ interface ProcessResult {
 }
 
 Deno.serve(async (req: Request) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { status: 200, headers: corsHeaders });
-  }
+  const corsResponse = handleCors(req);
+  if (corsResponse) return corsResponse;
 
   try {
     const { genre }: RequestBody = await req.json();
 
-    const apiKey = Deno.env.get("ANTHROPIC_API_KEY");
+    const apiKey = getAnthropicApiKey();
     if (!apiKey) {
-      return new Response(JSON.stringify({ error: "API key not configured" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return errorResponse("API key not configured");
     }
 
     const prompt = `あなたは英語学習のための日本語→英語変換練習コンテンツを生成するエンジンです。
@@ -51,48 +43,28 @@ Deno.serve(async (req: Request) => {
 vocabularyには2〜4個の難しい単語・表現を含めてください。
 JSONのみ出力し、コードブロックは使用しないでください。`;
 
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
-        max_tokens: 1024,
-        messages: [{ role: "user", content: prompt }],
-      }),
+    const response = await callAnthropic(apiKey, {
+      max_tokens: 1024,
+      messages: [{ role: "user", content: prompt }],
     });
 
     if (!response.ok) {
       const err = await response.text();
-      return new Response(JSON.stringify({ error: "Anthropic API error", details: err }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return errorResponse(`Anthropic API error: ${err}`);
     }
 
     const data = await response.json();
-    const text = data.content[0].text.trim();
+    const text = extractText(data).trim();
 
     let result: ProcessResult;
     try {
       result = JSON.parse(text);
     } catch {
-      return new Response(JSON.stringify({ error: "JSON parse error", raw: text }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonResponse({ error: "JSON parse error", raw: text }, 500);
     }
 
-    return new Response(JSON.stringify(result), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return jsonResponse(result);
   } catch (e) {
-    return new Response(JSON.stringify({ error: String(e) }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return errorResponse(String(e));
   }
 });
