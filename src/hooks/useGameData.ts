@@ -109,7 +109,7 @@ export function useGameData(userId: string | undefined, userEmail: string | unde
             user_id: userId,
             email: userEmail,
             time: 0,
-            energy: 50,
+            energy: 80,
             toilet: 0,
             sick: 0,
             readbooks: 0,
