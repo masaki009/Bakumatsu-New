@@ -76,7 +76,7 @@ export default function UserMenu() {
         { id: 'vocabulary', label: 'ボキャブラ　直接アクセス', icon: BookOpen, notionBadge: 'plain' },
         { id: 'listening-practice', label: 'リスニング練習', icon: Headphones },
         { id: 'audio-100-knock', label: '音声100本ノック', icon: Volume2, notionBadge: 'arrow' },
-        { id: 'audio-memory', label: '音声神経衰弱', icon: Music },
+        { id: 'audio-memory', label: '音声神経衰弱', icon: Music, notionBadge: 'arrow' },
         { id: 'sound-change-chunk', label: '音変化チャンク', icon: Volume2 },
         { id: 'sound-change-dictation', label: '音変化チャンクディクテーション', icon: Mic },
         { id: 'chunk', label: 'チャンク　直接アクセス', icon: Database, notionBadge: 'plain' },
