@@ -1,15 +1,47 @@
-import { useState, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Home, MapPin, Briefcase, Coffee, ArrowLeft, ChevronRight, BookOpen, CheckCircle, Loader2, Save, RefreshCw } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { getJSTDate } from '../utils/dateUtils';
 import { THEME_CONFIG, getPlainText, countWords, type Theme, type Passage } from '../data/slashReadingPassages';
 
+type Difficulty = '初級' | '中級' | '上級';
+type Step = 0 | 1 | 2;
+
 interface Props {
   onBack: () => void;
 }
 
-type Step = 0 | 1 | 2;
+function levelToDifficulty(level: string | null | undefined): Difficulty {
+  if (!level) return '中級';
+  const l = level.toUpperCase();
+  if (l === 'A1' || l === 'A2') return '初級';
+  if (l === 'B1' || l === 'B2') return '中級';
+  return '上級';
+}
+
+const DIFFICULTY_STYLES: Record<Difficulty, { selected: string; idle: string; desc: string; badge: string }> = {
+  '初級': {
+    selected: 'bg-emerald-500 text-white border-emerald-500',
+    idle: 'bg-white text-emerald-700 border-emerald-300 hover:bg-emerald-50',
+    desc: '約30語',
+    badge: 'bg-emerald-100 text-emerald-700',
+  },
+  '中級': {
+    selected: 'bg-blue-500 text-white border-blue-500',
+    idle: 'bg-white text-blue-700 border-blue-300 hover:bg-blue-50',
+    desc: '約40語',
+    badge: 'bg-blue-100 text-blue-700',
+  },
+  '上級': {
+    selected: 'bg-amber-500 text-white border-amber-500',
+    idle: 'bg-white text-amber-700 border-amber-300 hover:bg-amber-50',
+    desc: '約50語',
+    badge: 'bg-amber-100 text-amber-700',
+  },
+};
+
+const DIFFICULTIES: Difficulty[] = ['初級', '中級', '上級'];
 
 const THEME_ICONS: Record<Theme, React.ElementType> = {
   daily: Home,
@@ -38,11 +70,26 @@ export default function SlashReading({ onBack }: Props) {
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [difficulty, setDifficulty] = useState<Difficulty>('中級');
+
+  useEffect(() => {
+    if (!user?.id) return;
+    supabase
+      .from('self_profiles')
+      .select('current_level')
+      .eq('user_id', user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data?.current_level) {
+          setDifficulty(levelToDifficulty(data.current_level));
+        }
+      });
+  }, [user?.id]);
 
   const plainText = currentPassage ? getPlainText(currentPassage) : '';
   const wordCount = plainText ? countWords(plainText) : 0;
 
-  const fetchPassage = useCallback(async (theme: Theme) => {
+  const fetchPassage = useCallback(async (theme: Theme, diff: Difficulty) => {
     setLoadingPassage(true);
     setPassageError(null);
     setCurrentPassage(null);
@@ -55,7 +102,7 @@ export default function SlashReading({ onBack }: Props) {
             Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ theme }),
+          body: JSON.stringify({ theme, difficulty: diff }),
         }
       );
       if (!response.ok) throw new Error('パッセージの生成に失敗しました');
@@ -75,7 +122,7 @@ export default function SlashReading({ onBack }: Props) {
     setSaved(false);
     setSaveMessage(null);
     setPhase('reading');
-    fetchPassage(theme);
+    fetchPassage(theme, difficulty);
   };
 
   const handleNext = () => {
@@ -83,7 +130,7 @@ export default function SlashReading({ onBack }: Props) {
     setStep(0);
     setSaved(false);
     setSaveMessage(null);
-    fetchPassage(selectedTheme);
+    fetchPassage(selectedTheme, difficulty);
   };
 
   const handleBackToThemes = () => {
@@ -150,7 +197,27 @@ export default function SlashReading({ onBack }: Props) {
             </button>
             <div>
               <h1 className="text-2xl font-bold text-slate-800">句読法（英 → 和）</h1>
-              <p className="text-sm text-slate-500">テーマを選んでください</p>
+              <p className="text-sm text-slate-500">難易度とテーマを選んでください</p>
+            </div>
+          </div>
+
+          <div className="bg-white border border-slate-200 rounded-2xl px-4 py-4 shadow-sm">
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">難易度選択</p>
+            <div className="grid grid-cols-3 gap-2">
+              {DIFFICULTIES.map((d) => {
+                const s = DIFFICULTY_STYLES[d];
+                const isSelected = difficulty === d;
+                return (
+                  <button
+                    key={d}
+                    onClick={() => setDifficulty(d)}
+                    className={`flex flex-col items-center py-3 px-2 rounded-xl border-2 transition-all font-semibold text-sm active:scale-95 ${isSelected ? s.selected : s.idle}`}
+                  >
+                    <span>{d}</span>
+                    <span className={`text-[10px] font-normal mt-0.5 ${isSelected ? 'opacity-80' : 'opacity-50'}`}>{s.desc}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -195,6 +262,7 @@ export default function SlashReading({ onBack }: Props) {
   const themeStyle = THEME_CARD_STYLES[selectedTheme];
   const themeConfig = THEME_CONFIG[selectedTheme];
   const ThemeIcon = THEME_ICONS[selectedTheme];
+  const diffStyle = DIFFICULTY_STYLES[difficulty];
 
   if (loadingPassage) {
     return (
@@ -207,14 +275,16 @@ export default function SlashReading({ onBack }: Props) {
             >
               <ArrowLeft size={18} />
             </button>
-            <div className="flex-1">
+            <div className="flex-1 flex items-center gap-2">
               <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold ${themeStyle.badge}`}>
                 <ThemeIcon size={11} />
                 {themeConfig.label}
               </span>
+              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${diffStyle.badge}`}>
+                {difficulty}
+              </span>
             </div>
           </div>
-
           <div className="bg-white border border-slate-200 rounded-2xl px-6 py-12 shadow-sm flex flex-col items-center gap-4">
             <Loader2 size={32} className="text-blue-400 animate-spin" />
             <p className="text-sm text-slate-500">AIがパッセージを生成中...</p>
@@ -239,7 +309,7 @@ export default function SlashReading({ onBack }: Props) {
           <div className="bg-white border border-red-200 rounded-2xl px-6 py-8 shadow-sm flex flex-col items-center gap-4">
             <p className="text-sm text-red-600 text-center">{passageError}</p>
             <button
-              onClick={() => fetchPassage(selectedTheme)}
+              onClick={() => fetchPassage(selectedTheme, difficulty)}
               className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-500 text-white text-sm font-semibold hover:bg-blue-600 transition-colors"
             >
               <RefreshCw size={14} />
@@ -269,6 +339,9 @@ export default function SlashReading({ onBack }: Props) {
               <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold ${themeStyle.badge}`}>
                 <ThemeIcon size={11} />
                 {themeConfig.label}
+              </span>
+              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${diffStyle.badge}`}>
+                {difficulty}
               </span>
             </div>
             <h1 className="text-sm font-bold text-slate-700 mt-0.5">スラッシュリーディング</h1>
