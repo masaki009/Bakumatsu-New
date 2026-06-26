@@ -132,7 +132,7 @@ export default function UserMenu() {
       subtitle: 'ユーザーマニュアル＆便利ツール',
       icon: Wrench,
       subItems: [
-        { id: 'bakumatchi-manual', label: 'バクマッチマニュアル', icon: BookOpen },
+        { id: 'bakumatchi-manual', label: 'ばくまっちマニュアル', icon: BookOpen },
         { id: 'tadoku-reference', label: '多読参考資料', icon: BookOpen },
         { id: 'sokudo-reference', label: '速読参考資料', icon: FastForward },
         { id: 'link-collection', label: 'リンク集', icon: Bookmark },
