@@ -132,6 +132,7 @@ export default function UserMenu() {
       subtitle: 'ユーザーマニュアル＆便利ツール',
       icon: Wrench,
       subItems: [
+        { id: 'bakumatchi-manual', label: 'バクマッチマニュアル', icon: BookOpen },
         { id: 'tadoku-reference', label: '多読参考資料', icon: BookOpen },
         { id: 'sokudo-reference', label: '速読参考資料', icon: FastForward },
         { id: 'link-collection', label: 'リンク集', icon: Bookmark },
@@ -239,6 +240,10 @@ export default function UserMenu() {
 
   if (selectedSubMenu === 'blood-type-learning') {
     return <BloodTypeLearning onBack={handleBackToSubMenu} />;
+  }
+
+  if (selectedSubMenu === 'bakumatchi-manual') {
+    return <ReferenceViewer onBack={handleBackToSubMenu} title="バクマッチマニュアル" imagePath="/bakumanual.png" />;
   }
 
   if (selectedSubMenu === 'tadoku-reference') {
