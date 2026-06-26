@@ -132,7 +132,6 @@ export default function UserMenu() {
       subtitle: 'ユーザーマニュアル＆便利ツール',
       icon: Wrench,
       subItems: [
-        { id: 'link-collection', label: 'ばくまっちマニュアル', icon: chick },
         { id: 'tadoku-reference', label: '多読参考資料', icon: BookOpen },
         { id: 'sokudo-reference', label: '速読参考資料', icon: FastForward },
         { id: 'link-collection', label: 'リンク集', icon: Bookmark },
