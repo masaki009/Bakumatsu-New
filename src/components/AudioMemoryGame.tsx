@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { ArrowLeft, RotateCcw, Volume2, Loader2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
+import { getJSTDate } from '../utils/dateUtils';
 
 type SourceType = 'notion_perfect' | 'notion_review' | 'notion_learning' | 'github' | null;
 
@@ -49,6 +51,7 @@ const CARD_COLORS = [
 ];
 
 export default function AudioMemoryGame({ onBack }: AudioMemoryGameProps) {
+  const { user } = useAuth();
   const [selectedSource, setSelectedSource] = useState<SourceType>(null);
   const [availableItems, setAvailableItems] = useState<AudioItem[]>([]);
   const [isLoadingSource, setIsLoadingSource] = useState(false);
@@ -356,6 +359,38 @@ export default function AudioMemoryGame({ onBack }: AudioMemoryGameProps) {
     }
   };
 
+  const incrementListening = async () => {
+    if (!user?.id || !user?.email) return;
+    const today = getJSTDate();
+    const { data: diary } = await supabase
+      .from('s_diaries')
+      .select('listening')
+      .eq('user_id', user.id)
+      .eq('date', today)
+      .maybeSingle();
+    if (diary) {
+      await supabase
+        .from('s_diaries')
+        .update({ listening: (diary.listening ?? 0) + 1 })
+        .eq('user_id', user.id)
+        .eq('date', today);
+    } else {
+      await supabase
+        .from('s_diaries')
+        .insert({ user_id: user.id, email: user.email, date: today, listening: 1 });
+    }
+  };
+
+  const handleModalRetry = async () => {
+    await incrementListening();
+    resetGame();
+  };
+
+  const handleModalBack = async () => {
+    await incrementListening();
+    onBack();
+  };
+
   const resetGame = () => {
     setCards([]);
     setFlippedCards([]);
@@ -596,13 +631,13 @@ export default function AudioMemoryGame({ onBack }: AudioMemoryGameProps) {
               </div>
               <div className="flex gap-4">
                 <button
-                  onClick={resetGame}
+                  onClick={handleModalRetry}
                   className="flex-1 bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-bold transition-colors"
                 >
                   もう一度
                 </button>
                 <button
-                  onClick={onBack}
+                  onClick={handleModalBack}
                   className="flex-1 bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg font-bold transition-colors"
                 >
                   メニューへ
