@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import WordOrderQuizSetup from './WordOrderQuizSetup';
 import WordOrderQuizQuestion from './WordOrderQuizQuestion';
 import WordOrderQuizResults from './WordOrderQuizResults';
+import { supabase } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
 
 interface Question {
   japanese: string;
@@ -21,15 +23,32 @@ const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
 
 export default function WordOrderQuiz({ onBack }: Props) {
+  const { user } = useAuth();
   const [screen, setScreen] = useState<Screen>('setup');
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
-  const [difficulty, setDifficulty] = useState('');
+  const [difficulty, setDifficulty] = useState('中級');
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [placedBlocks, setPlacedBlocks] = useState<string[]>([]);
   const [score, setScore] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (!user?.id) return;
+    supabase
+      .from('self_profiles')
+      .select('current_level')
+      .eq('user_id', user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        const level = data?.current_level as string | undefined;
+        if (!level) return;
+        if (['A1', 'A2'].includes(level)) setDifficulty('初級');
+        else if (['B1', 'B2'].includes(level)) setDifficulty('中級');
+        else if (['C1', 'C2'].includes(level)) setDifficulty('上級');
+      });
+  }, [user?.id]);
 
   const toggleGenre = (genre: string) => {
     setSelectedGenres((prev) =>
@@ -114,7 +133,7 @@ export default function WordOrderQuiz({ onBack }: Props) {
 
   const handleRestart = () => {
     setSelectedGenres([]);
-    setDifficulty('');
+    setDifficulty('中級');
     setQuestions([]);
     setCurrentIndex(0);
     setPlacedBlocks([]);
