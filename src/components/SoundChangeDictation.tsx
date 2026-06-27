@@ -1,5 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ArrowLeft, Volume2, Loader2, CheckCircle, XCircle, RotateCcw, ChevronRight, Mic } from 'lucide-react';
+import { supabase } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
 
 type SoundChangeType = '脱落・弱化' | '同化' | 'リンキング' | '短縮形' | 'ランダム';
 type Level = '初級' | '中級' | '上級';
@@ -71,9 +73,18 @@ function compareAnswers(userInput: string, correct: string) {
   return { words: result, score: correctCount / Math.max(correctWords.length, 1) };
 }
 
+function levelToDifficulty(level: string | null | undefined): Level {
+  if (!level) return '中級';
+  const l = level.toUpperCase();
+  if (l === 'A1' || l === 'A2') return '初級';
+  if (l === 'B1' || l === 'B2') return '中級';
+  return '上級';
+}
+
 export default function SoundChangeDictation({ onBack }: Props) {
+  const { user } = useAuth();
   const [screen, setScreen] = useState<'setup' | 'dictating'>('setup');
-  const [level, setLevel] = useState<Level>('初級');
+  const [level, setLevel] = useState<Level>('中級');
   const [selectedType, setSelectedType] = useState<SoundChangeType>('リンキング');
   const [questions, setQuestions] = useState<DictationQuestion[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -86,6 +97,20 @@ export default function SoundChangeDictation({ onBack }: Props) {
 
   const current = questions[currentIndex];
   const result = showResult && current ? compareAnswers(currentInput, current.sentence) : null;
+
+  useEffect(() => {
+    if (!user?.id) return;
+    supabase
+      .from('self_profiles')
+      .select('current_level')
+      .eq('user_id', user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data?.current_level) {
+          setLevel(levelToDifficulty(data.current_level));
+        }
+      });
+  }, [user?.id]);
 
   const fetchQuestions = async () => {
     setLoading(true);
