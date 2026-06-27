@@ -171,7 +171,7 @@ export default function SoundChangeDictation({ onBack }: Props) {
 
         <div className="flex-1 max-w-3xl mx-auto w-full px-4 py-8 flex flex-col gap-8">
           <div>
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">レベルを選択</p>
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">難易度選択</p>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {LEVELS.map(l => (
                 <button
