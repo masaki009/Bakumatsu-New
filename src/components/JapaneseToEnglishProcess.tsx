@@ -1,11 +1,14 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ArrowLeft, ChevronRight, Loader2, RefreshCw, BookOpen, Languages, FileText, ListChecks } from 'lucide-react';
+import { supabase } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
 
 interface Props {
   onBack: () => void;
 }
 
 type Phase = 'genre-select' | 'step1' | 'step2' | 'step3' | 'summary';
+type Difficulty = '初級' | '中級' | '上級';
 
 interface ProcessResult {
   original: string;
@@ -50,14 +53,40 @@ const PHASE_INDEX: Record<Phase, number> = {
   summary: 3,
 };
 
+const DIFFICULTIES: { id: Difficulty; desc: string }[] = [
+  { id: '初級', desc: 'A1-A2 / 短く平易な文' },
+  { id: '中級', desc: 'B1-B2 / 日常的な表現' },
+  { id: '上級', desc: 'C1-C2 / 複雑・専門的な文' },
+];
+
+function levelToDifficulty(level: string): Difficulty {
+  if (['A1', 'A2'].includes(level)) return '初級';
+  if (['C1', 'C2'].includes(level)) return '上級';
+  return '中級';
+}
+
 export default function JapaneseToEnglishProcess({ onBack }: Props) {
+  const { user } = useAuth();
   const [phase, setPhase] = useState<Phase>('genre-select');
   const [selectedGenre, setSelectedGenre] = useState<string>('');
+  const [difficulty, setDifficulty] = useState<Difficulty>('中級');
   const [result, setResult] = useState<ProcessResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchContent = async (genre: string) => {
+  useEffect(() => {
+    if (!user?.id) return;
+    supabase
+      .from('self_profiles')
+      .select('current_level')
+      .eq('user_id', user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data?.current_level) setDifficulty(levelToDifficulty(data.current_level));
+      });
+  }, [user?.id]);
+
+  const fetchContent = async (genre: string, diff: Difficulty) => {
     setLoading(true);
     setError(null);
     setResult(null);
@@ -70,7 +99,7 @@ export default function JapaneseToEnglishProcess({ onBack }: Props) {
             Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ genre }),
+          body: JSON.stringify({ genre, difficulty: diff }),
         }
       );
       if (!res.ok) throw new Error('生成に失敗しました');
@@ -87,7 +116,7 @@ export default function JapaneseToEnglishProcess({ onBack }: Props) {
 
   const handleGenreSelect = (genre: string) => {
     setSelectedGenre(genre);
-    fetchContent(genre);
+    fetchContent(genre, difficulty);
   };
 
   const handleRetry = () => {
@@ -98,7 +127,7 @@ export default function JapaneseToEnglishProcess({ onBack }: Props) {
   };
 
   const handleNewSentence = () => {
-    fetchContent(selectedGenre);
+    fetchContent(selectedGenre, difficulty);
     setPhase('genre-select');
   };
 
@@ -164,7 +193,7 @@ export default function JapaneseToEnglishProcess({ onBack }: Props) {
               <Loader2 size={48} className="text-blue-500 animate-spin" />
             </div>
             <p className="text-gray-600 font-medium">文章を生成中...</p>
-            <p className="text-sm text-gray-400">ジャンル：{selectedGenre}</p>
+            <p className="text-sm text-gray-400">ジャンル：{selectedGenre}　難易度：{difficulty}</p>
           </div>
         )}
 
@@ -187,7 +216,8 @@ export default function JapaneseToEnglishProcess({ onBack }: Props) {
               <h2 className="text-2xl font-bold text-gray-900 mb-2">ジャンルを選んでください</h2>
               <p className="text-gray-500 text-sm">選んだジャンルの日本語文を生成します</p>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-8">
               {GENRES.map((genre, i) => (
                 <button
                   key={genre}
@@ -197,6 +227,34 @@ export default function JapaneseToEnglishProcess({ onBack }: Props) {
                   {genre}
                 </button>
               ))}
+            </div>
+
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">難易度選択</p>
+              <div className="grid grid-cols-3 gap-3">
+                {DIFFICULTIES.map((d) => {
+                  const active = difficulty === d.id;
+                  return (
+                    <button
+                      key={d.id}
+                      onClick={() => setDifficulty(d.id)}
+                      className={`relative text-left px-4 py-3 rounded-xl border-2 transition-all ${
+                        active
+                          ? 'border-blue-500 bg-blue-50 shadow-sm'
+                          : 'border-gray-200 bg-gray-50 hover:border-blue-300 hover:bg-blue-50/40'
+                      }`}
+                    >
+                      <span className={`block font-bold text-sm ${active ? 'text-blue-700' : 'text-gray-700'}`}>
+                        {d.id}
+                      </span>
+                      <span className="block text-xs text-gray-400 mt-0.5 leading-tight">{d.desc}</span>
+                      {active && (
+                        <span className="absolute top-2 right-2 w-2 h-2 bg-blue-500 rounded-full" />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
         )}
@@ -209,6 +267,7 @@ export default function JapaneseToEnglishProcess({ onBack }: Props) {
                   <FileText size={18} className="text-blue-600" />
                 </div>
                 <span className="text-xs font-semibold text-blue-600 uppercase tracking-wide">ジャンル：{selectedGenre}</span>
+                <span className="ml-auto text-xs font-semibold px-2 py-1 bg-gray-100 text-gray-600 rounded-full">{difficulty}</span>
               </div>
               <p className="text-xs text-gray-500 mb-3 font-medium">次の日本語文を英語に訳す練習をしましょう</p>
               <div className="bg-blue-50 rounded-xl p-5 border-l-4 border-blue-400">
@@ -312,6 +371,7 @@ export default function JapaneseToEnglishProcess({ onBack }: Props) {
                 </div>
                 <h2 className="text-lg font-bold text-gray-900">まとめ</h2>
                 <span className="ml-auto text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded-full">{selectedGenre}</span>
+                <span className="text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-1 rounded-full">{difficulty}</span>
               </div>
 
               <div className="space-y-4">
