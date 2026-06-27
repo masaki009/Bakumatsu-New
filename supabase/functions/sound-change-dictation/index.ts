@@ -92,7 +92,7 @@ Requirements:
 - Each sentence MUST clearly demonstrate the specified sound change type
 - Sentence length and difficulty MUST match the level
 - All 3 sentences must use different vocabulary and contexts
-- For ミックス: include at least 3 different sound change types per sentence
+- For ランダム: include at least 3 different sound change types per sentence
 
 Return ONLY valid JSON with no markdown fences:
 {
