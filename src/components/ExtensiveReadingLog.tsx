@@ -17,8 +17,7 @@ export default function ExtensiveReadingLog({ onBack }: ExtensiveReadingLogProps
 
   const [formData, setFormData] = useState(() => ({
     reading_date: formatJSTDateTimeLocale(),
-    words: '',
-    wpm: ''
+    words: ''
   }));
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -41,7 +40,7 @@ export default function ExtensiveReadingLog({ onBack }: ExtensiveReadingLogProps
         p_email: user.email,
         p_reading_date: utcReadingDate,
         p_words: words,
-        p_wpm: parseInt(formData.wpm) || 0,
+        p_wpm: 0,
         p_is_reading_aloud: false
       });
 
@@ -54,8 +53,7 @@ export default function ExtensiveReadingLog({ onBack }: ExtensiveReadingLogProps
 
       setFormData({
         reading_date: formatJSTDateTimeLocale(),
-        words: '',
-        wpm: ''
+        words: ''
       });
     } catch (error: any) {
       console.error('Error saving reading record:', error);
@@ -127,22 +125,6 @@ export default function ExtensiveReadingLog({ onBack }: ExtensiveReadingLogProps
                 value={formData.words}
                 onChange={handleChange}
                 placeholder="読んだ語数を入力"
-                min="0"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                WPM (Words Per Minute)
-              </label>
-              <input
-                type="number"
-                name="wpm"
-                value={formData.wpm}
-                onChange={handleChange}
-                placeholder="読書速度を入力"
                 min="0"
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                 required

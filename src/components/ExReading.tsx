@@ -95,8 +95,8 @@ export default function ExReading({ onBack }: ExReadingProps) {
       return;
     }
 
-    if (wordCount === 0 || wpm === 0) {
-      setMessage({ type: 'error', text: 'Word数とWPMを記録してください' });
+    if (wordCount === 0) {
+      setMessage({ type: 'error', text: 'Word数を記録してください' });
       return;
     }
 
@@ -218,7 +218,7 @@ export default function ExReading({ onBack }: ExReadingProps) {
             />
           </div>
 
-          <div className="grid grid-cols-4 gap-3 mb-6">
+          <div className="grid grid-cols-3 gap-3 mb-6">
             <button
               onClick={handlePaste}
               className="flex items-center justify-center gap-2 px-4 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition font-medium"
@@ -237,10 +237,6 @@ export default function ExReading({ onBack }: ExReadingProps) {
 
             <div className="flex items-center justify-center px-4 py-3 bg-orange-100 text-orange-800 rounded-lg font-semibold border-2 border-orange-300">
               Words: {wordCount}
-            </div>
-
-            <div className="flex items-center justify-center px-4 py-3 bg-orange-100 text-orange-800 rounded-lg font-semibold border-2 border-orange-300">
-              WPM: {wpm}
             </div>
 
             <button
@@ -271,7 +267,7 @@ export default function ExReading({ onBack }: ExReadingProps) {
 
             <button
               onClick={handleSave}
-              disabled={loading || wordCount === 0 || wpm === 0}
+              disabled={loading || wordCount === 0}
               className="flex items-center justify-center gap-2 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Save size={18} />
