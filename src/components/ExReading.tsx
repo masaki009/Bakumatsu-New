@@ -20,7 +20,6 @@ export default function ExReading({ onBack }: ExReadingProps) {
   const [fontSize, setFontSize] = useState(20);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-  const [isReadingAloud, setIsReadingAloud] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [confirmChoice, setConfirmChoice] = useState<'yes' | 'no' | null>(null);
 
@@ -60,7 +59,6 @@ export default function ExReading({ onBack }: ExReadingProps) {
     setWpm(0);
     setElapsedTime(0);
     setIsRunning(false);
-    setIsReadingAloud(false);
   };
 
   const handleStart = () => {
@@ -127,24 +125,27 @@ export default function ExReading({ onBack }: ExReadingProps) {
           reading_date: today,
           words: wordCount,
           wpm: wpm,
-          is_reading_aloud: isReadingAloud
+          is_reading_aloud: false
         });
 
       if (error) throw error;
 
       const { data: diaryData, error: diaryError } = await supabase
         .from('s_diaries')
-        .select('*')
+        .select('ex_reading, s_reading')
         .eq('user_id', user.id)
+        .eq('date', today)
         .maybeSingle();
 
       if (!diaryError && diaryData) {
         const { error: updateDiaryError } = await supabase
           .from('s_diaries')
           .update({
-            ex_reading: diaryData.ex_reading + wordCount
+            ex_reading: (diaryData.ex_reading ?? 0) + wordCount,
+            s_reading: (diaryData.s_reading ?? 0) + 1,
           })
-          .eq('user_id', user.id);
+          .eq('user_id', user.id)
+          .eq('date', today);
 
         if (updateDiaryError) {
           console.error('Error updating s_diaries:', updateDiaryError);
@@ -156,7 +157,8 @@ export default function ExReading({ onBack }: ExReadingProps) {
             user_id: user.id,
             email: user.email,
             date: today,
-            ex_reading: wordCount
+            ex_reading: wordCount,
+            s_reading: 1,
           });
 
         if (insertDiaryError) {
@@ -259,24 +261,13 @@ export default function ExReading({ onBack }: ExReadingProps) {
               速読END
             </button>
 
-            <div className="flex items-center gap-2">
-              <label className="flex items-center gap-2 flex-1 px-4 py-3 bg-blue-100 text-blue-800 rounded-lg border-2 border-blue-300 cursor-pointer hover:bg-blue-200 transition">
-                <input
-                  type="checkbox"
-                  checked={isReadingAloud}
-                  onChange={(e) => setIsReadingAloud(e.target.checked)}
-                  className="w-5 h-5 cursor-pointer"
-                />
-                <span className="font-semibold">音読</span>
-              </label>
-              <button
-                onClick={cycleFontSize}
-                className="flex items-center justify-center gap-2 px-3 py-3 bg-gray-600 text-white font-medium rounded-lg hover:bg-gray-700 transition"
-              >
-                <Type size={18} />
-                <span>{fontSize}px</span>
-              </button>
-            </div>
+            <button
+              onClick={cycleFontSize}
+              className="flex items-center justify-center gap-2 px-3 py-3 bg-gray-600 text-white font-medium rounded-lg hover:bg-gray-700 transition"
+            >
+              <Type size={18} />
+              <span>{fontSize}px</span>
+            </button>
 
             <button
               onClick={handleSave}
