@@ -401,9 +401,6 @@ export default function EnglishConversationAvatar({ onBack }: EnglishConversatio
                       {scoringResult.speedScore}点
                     </span>
                   </div>
-                  <p className="text-xs text-gray-600 mt-1">
-                    1分あたりの単語数: {scoringResult.wpm} WPM (最適: 120-180 WPM)
-                  </p>
                 </div>
 
                 <div className={`rounded-lg p-4 border-2 ${getScoreBgColor(scoringResult.fluency)}`}>

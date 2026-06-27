@@ -325,7 +325,29 @@ export default function WordOrderQuizQuestion({
 
           {checked && (
             <button
-              onClick={onBack}
+              onClick={async () => {
+                if (user?.id && user?.email) {
+                  const today = getJSTDate();
+                  const { data: diary } = await supabase
+                    .from('s_diaries')
+                    .select('o_speaking')
+                    .eq('user_id', user.id)
+                    .eq('date', today)
+                    .maybeSingle();
+                  if (diary) {
+                    await supabase
+                      .from('s_diaries')
+                      .update({ o_speaking: (diary.o_speaking ?? 0) + 1 })
+                      .eq('user_id', user.id)
+                      .eq('date', today);
+                  } else {
+                    await supabase
+                      .from('s_diaries')
+                      .insert({ user_id: user.id, email: user.email, date: today, o_speaking: 1 });
+                  }
+                }
+                onBack();
+              }}
               className="flex items-center gap-2 px-4 py-3 rounded-xl bg-white border border-slate-300 text-slate-600 text-sm font-semibold hover:bg-slate-50 transition-colors"
             >
               <Home size={16} />
