@@ -18,7 +18,7 @@ const TYPE_DESCRIPTIONS: Record<string, string> = {
   "同化": "Assimilation — adjacent sounds influence each other and change (did you → didʒu, hit you → hitʃu, this year → thisʃir, got you → gotʃu, etc.)",
   "リンキング": "Linking — word boundaries disappear so the final consonant of one word links to the initial vowel of the next (pick it up → pickitup, an apple → anapple, take it → takedit, etc.)",
   "短縮形": "Contraction — two or more words fused into one reduced form (wanna=want to, gimme=give me, gonna=going to, dunno=don't know, lemme=let me, coulda=could have, etc.)",
-  "ミックス": "Mix — multiple sound change types occur in a single sentence (e.g., reduction + linking + assimilation all together)",
+  "ランダム": "Mix — multiple sound change types occur in a single sentence (e.g., reduction + linking + assimilation all together)",
 };
 
 const TOPIC_POOLS: string[] = [
