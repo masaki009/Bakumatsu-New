@@ -1,5 +1,8 @@
 import { useState } from 'react';
 import { Lightbulb, CheckCircle, XCircle, ArrowRight, Home, PenLine, Loader2, MessageSquare } from 'lucide-react';
+import { supabase } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
+import { getJSTDate } from '../utils/dateUtils';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
@@ -33,6 +36,7 @@ export default function WordOrderQuizQuestion({
   onNext,
   onBack,
 }: Props) {
+  const { user } = useAuth();
   const [showHint, setShowHint] = useState(false);
   const [checked, setChecked] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
@@ -92,6 +96,31 @@ export default function WordOrderQuizQuestion({
     } finally {
       setChallengeLoading(false);
     }
+  };
+
+  const handleNext = async () => {
+    if (user?.id && user?.email) {
+      const today = getJSTDate();
+      const { data: diary } = await supabase
+        .from('s_diaries')
+        .select('o_speaking')
+        .eq('user_id', user.id)
+        .eq('date', today)
+        .maybeSingle();
+
+      if (diary) {
+        await supabase
+          .from('s_diaries')
+          .update({ o_speaking: (diary.o_speaking ?? 0) + 1 })
+          .eq('user_id', user.id)
+          .eq('date', today);
+      } else {
+        await supabase
+          .from('s_diaries')
+          .insert({ user_id: user.id, email: user.email, date: today, o_speaking: 1 });
+      }
+    }
+    onNext(isCorrect);
   };
 
   const handleToggleChallenge = () => {
@@ -328,7 +357,7 @@ export default function WordOrderQuizQuestion({
             </button>
           ) : (
             <button
-              onClick={() => onNext(isCorrect)}
+              onClick={handleNext}
               className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-blue-500 text-white font-bold text-sm hover:bg-blue-600 transition-colors shadow-md"
             >
               {questionNumber < totalQuestions ? '次の問題' : '結果を見る'}
