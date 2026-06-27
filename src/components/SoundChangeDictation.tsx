@@ -42,7 +42,7 @@ const TYPE_COLORS: Record<SoundChangeType, { base: string; selected: string }> =
   '同化':       { base: 'bg-blue-100 text-blue-700 border-blue-300',   selected: 'bg-blue-500 text-white border-blue-500' },
   'リンキング': { base: 'bg-teal-100 text-teal-700 border-teal-300',   selected: 'bg-teal-500 text-white border-teal-500' },
   '短縮形':     { base: 'bg-rose-100 text-rose-700 border-rose-300',   selected: 'bg-rose-500 text-white border-rose-500' },
-  'ミックス':   { base: 'bg-violet-100 text-violet-700 border-violet-300', selected: 'bg-violet-500 text-white border-violet-500' },
+  'ランダム':   { base: 'bg-violet-100 text-violet-700 border-violet-300', selected: 'bg-violet-500 text-white border-violet-500' },
 };
 
 function speakEnglish(text: string, rate: number = 1.0) {
