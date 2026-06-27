@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { ArrowLeft, Volume2, Loader2, CheckCircle, XCircle, RotateCcw, ChevronRight, Mic } from 'lucide-react';
 
-type SoundChangeType = '脱落・弱化' | '同化' | 'リンキング' | '短縮形' | 'ミックス';
+type SoundChangeType = '脱落・弱化' | '同化' | 'リンキング' | '短縮形' | 'ランダム';
 type Level = '初級' | '中級' | '上級';
 type Speed = 0.7 | 1.0 | 1.2;
 
@@ -22,7 +22,7 @@ interface Props {
   onBack?: () => void;
 }
 
-const TYPES: SoundChangeType[] = ['脱落・弱化', '同化', 'リンキング', '短縮形', 'ミックス'];
+const TYPES: SoundChangeType[] = ['脱落・弱化', '同化', 'リンキング', '短縮形', 'ランダム'];
 const LEVELS: Level[] = ['初級', '中級', '上級'];
 
 const LEVEL_COLORS: Record<Level, { base: string; selected: string }> = {
