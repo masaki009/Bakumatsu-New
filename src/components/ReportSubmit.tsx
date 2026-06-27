@@ -317,7 +317,7 @@ export default function ReportSubmit({ onBack }: ReportSubmitProps) {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  ボキャブラリー（件数）
+                  ボキャブラリー（件数）（自己申告欄）
                 </label>
                 <input
                   type="number"
@@ -344,7 +344,7 @@ export default function ReportSubmit({ onBack }: ReportSubmitProps) {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  学習時間（分）
+                  学習時間（分）（自己申告欄）
                 </label>
                 <input
                   type="number"
