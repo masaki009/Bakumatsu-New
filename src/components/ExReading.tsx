@@ -284,7 +284,7 @@ export default function ExReading({ onBack }: ExReadingProps) {
               className="flex items-center justify-center gap-2 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Save size={18} />
-              記録
+              記録する
             </button>
           </div>
 
