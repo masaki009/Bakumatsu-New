@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { ArrowLeft, Volume2, Loader2, CheckCircle, XCircle, RotateCcw, ChevronRight, Mic } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { getJSTDate } from '../utils/dateUtils';
 
 type SoundChangeType = '脱落・弱化' | '同化' | 'リンキング' | '短縮形' | 'ランダム';
 type Level = '初級' | '中級' | '上級';
@@ -151,7 +152,30 @@ export default function SoundChangeDictation({ onBack }: Props) {
     setShowResult(true);
   };
 
-  const handleNext = () => {
+  const incrementListening = async () => {
+    if (!user?.id || !user?.email) return;
+    const today = getJSTDate();
+    const { data: diary } = await supabase
+      .from('s_diaries')
+      .select('listening')
+      .eq('user_id', user.id)
+      .eq('date', today)
+      .maybeSingle();
+    if (diary) {
+      await supabase
+        .from('s_diaries')
+        .update({ listening: (diary.listening ?? 0) + 1 })
+        .eq('user_id', user.id)
+        .eq('date', today);
+    } else {
+      await supabase
+        .from('s_diaries')
+        .insert({ user_id: user.id, email: user.email, date: today, listening: 1 });
+    }
+  };
+
+  const handleNext = async () => {
+    await incrementListening();
     if (currentIndex < questions.length - 1) {
       setCurrentIndex(i => i + 1);
       setCurrentInput('');
