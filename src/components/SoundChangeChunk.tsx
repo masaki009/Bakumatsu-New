@@ -28,7 +28,7 @@ const TYPE_COLORS: Record<SoundChangeType, string> = {
   '同化':       'bg-blue-100 text-blue-700 border-blue-300',
   'リンキング': 'bg-teal-100 text-teal-700 border-teal-300',
   '短縮形':     'bg-rose-100 text-rose-700 border-rose-300',
-  'ミックス':   'bg-violet-100 text-violet-700 border-violet-300',
+  'ランダム':   'bg-violet-100 text-violet-700 border-violet-300',
 };
 
 const TYPE_SELECTED: Record<SoundChangeType, string> = {
@@ -36,7 +36,7 @@ const TYPE_SELECTED: Record<SoundChangeType, string> = {
   '同化':       'bg-blue-500 text-white border-blue-500',
   'リンキング': 'bg-teal-500 text-white border-teal-500',
   '短縮形':     'bg-rose-500 text-white border-rose-500',
-  'ミックス':   'bg-violet-500 text-white border-violet-500',
+  'ランダム':   'bg-violet-500 text-white border-violet-500',
 };
 
 interface Props {
