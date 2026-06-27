@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useVitalSync } from '../hooks/useVitalSync';
 import { BookOpen, Save, ArrowLeft } from 'lucide-react';
-import { formatJSTDateTimeLocale, parseJSTDateTimeLocale } from '../utils/dateUtils';
+import { formatJSTDateLocale, parseJSTDateLocale } from '../utils/dateUtils';
 
 interface ExtensiveReadingLogProps {
   onBack?: () => void;
@@ -16,7 +16,7 @@ export default function ExtensiveReadingLog({ onBack }: ExtensiveReadingLogProps
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   const [formData, setFormData] = useState(() => ({
-    reading_date: formatJSTDateTimeLocale(),
+    reading_date: formatJSTDateLocale(),
     words: ''
   }));
 
@@ -32,13 +32,13 @@ export default function ExtensiveReadingLog({ onBack }: ExtensiveReadingLogProps
     setMessage(null);
 
     try {
-      const utcReadingDate = parseJSTDateTimeLocale(formData.reading_date);
+      const readingDate = parseJSTDateLocale(formData.reading_date);
       const words = parseInt(formData.words) || 0;
 
       const { error } = await supabase.rpc('exr_reading_rec', {
         p_user_id: user.id,
         p_email: user.email,
-        p_reading_date: utcReadingDate,
+        p_reading_date: readingDate,
         p_words: words,
         p_wpm: 0,
         p_is_reading_aloud: false
@@ -52,7 +52,7 @@ export default function ExtensiveReadingLog({ onBack }: ExtensiveReadingLogProps
       });
 
       setFormData({
-        reading_date: formatJSTDateTimeLocale(),
+        reading_date: formatJSTDateLocale(),
         words: ''
       });
     } catch (error: any) {
@@ -103,7 +103,7 @@ export default function ExtensiveReadingLog({ onBack }: ExtensiveReadingLogProps
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                読書日時
+                読書日
               </label>
               <input
                 type="text"
