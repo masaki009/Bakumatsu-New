@@ -75,6 +75,11 @@ export default function AudioMemoryGame({ onBack }: AudioMemoryGameProps) {
   const popupTimeoutRef = useRef<number | null>(null);
   const completionTimeoutRef = useRef<number | null>(null);
 
+  useEffect(() => {
+    selectGithubSource();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const selectGithubSource = () => {
     setSourceError(null);
     setSelectedSource('github');
@@ -477,93 +482,6 @@ export default function AudioMemoryGame({ onBack }: AudioMemoryGameProps) {
           <div className="flex-1">
             {!gameStarted && cards.length === 0 ? (
               <div className="flex flex-col gap-6">
-                <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-6">
-                  <h2 className="text-base font-semibold text-gray-700 mb-4">データソースを選ぶ</h2>
-                  <div className="grid grid-cols-2 gap-3">
-                    <button
-                      onClick={() => loadNotionSource('完璧', 'notion_perfect')}
-                      disabled={isLoadingSource}
-                      className={`px-5 py-3 rounded-xl text-sm font-bold shadow transition-all transform hover:scale-105 disabled:transform-none disabled:opacity-60 ${
-                        selectedSource === 'notion_perfect'
-                          ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-white ring-2 ring-amber-400 ring-offset-1'
-                          : 'bg-gradient-to-r from-amber-400 to-yellow-400 hover:from-amber-500 hover:to-yellow-500 text-white'
-                      }`}
-                    >
-                      Notion：完璧
-                    </button>
-                    <button
-                      onClick={() => loadNotionSource('要復習', 'notion_review')}
-                      disabled={isLoadingSource}
-                      className={`px-5 py-3 rounded-xl text-sm font-bold shadow transition-all transform hover:scale-105 disabled:transform-none disabled:opacity-60 ${
-                        selectedSource === 'notion_review'
-                          ? 'bg-gradient-to-r from-blue-500 to-sky-500 text-white ring-2 ring-blue-400 ring-offset-1'
-                          : 'bg-gradient-to-r from-blue-400 to-sky-400 hover:from-blue-500 hover:to-sky-500 text-white'
-                      }`}
-                    >
-                      Notion：要復習
-                    </button>
-                    <button
-                      onClick={() => loadNotionSource('覚え中', 'notion_learning')}
-                      disabled={isLoadingSource}
-                      className={`px-5 py-3 rounded-xl text-sm font-bold shadow transition-all transform hover:scale-105 disabled:transform-none disabled:opacity-60 ${
-                        selectedSource === 'notion_learning'
-                          ? 'bg-gradient-to-r from-teal-500 to-cyan-500 text-white ring-2 ring-teal-400 ring-offset-1'
-                          : 'bg-gradient-to-r from-teal-400 to-cyan-400 hover:from-teal-500 hover:to-cyan-500 text-white'
-                      }`}
-                    >
-                      Notion：覚え中
-                    </button>
-                    <button
-                      onClick={selectGithubSource}
-                      disabled={isLoadingSource}
-                      className={`px-5 py-3 rounded-xl text-sm font-bold shadow transition-all transform hover:scale-105 disabled:transform-none disabled:opacity-60 ${
-                        selectedSource === 'github'
-                          ? 'bg-gradient-to-r from-green-600 to-emerald-600 text-white ring-2 ring-green-400 ring-offset-1'
-                          : 'bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white'
-                      }`}
-                    >
-                      センター
-                    </button>
-                  </div>
-
-                  {isLoadingSource && (
-                    <div className="mt-4 flex items-center gap-2 text-sm text-gray-500">
-                      <Loader2 size={16} className="animate-spin" />
-                      データを取得中...
-                    </div>
-                  )}
-
-                  {sourceError && (
-                    <div className="mt-4 px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
-                      {sourceError}
-                    </div>
-                  )}
-
-                  {sourceError && (
-                    <div className="mt-4 pt-4 border-t border-gray-100">
-                      <button
-                        onClick={loadDebugInfo}
-                        disabled={isLoadingDebug}
-                        className="text-xs text-gray-400 hover:text-gray-600 underline"
-                      >
-                        {isLoadingDebug ? '確認中...' : '[デバッグ] Notionデータ構造を確認'}
-                      </button>
-                      {debugInfo && (
-                        <pre className="mt-2 p-3 bg-gray-50 border border-gray-200 rounded-lg text-xs text-gray-700 overflow-auto max-h-64">
-                          {JSON.stringify(debugInfo, null, 2)}
-                        </pre>
-                      )}
-                    </div>
-                  )}
-
-                  {selectedSource && availableItems.length > 0 && !isLoadingSource && (
-                    <div className="mt-4 px-4 py-2 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700">
-                      <span className="font-semibold">{sourceLabel[selectedSource]}</span>
-                      {' '}を選択中 — {availableItems.length}件取得
-                    </div>
-                  )}
-                </div>
-
                 {selectedSource && availableItems.length > 0 && !isLoadingSource && (
                   <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-6">
                     <h2 className="text-base font-semibold text-gray-700 mb-4">難易度を選ぶ（配るカード枚数）</h2>
