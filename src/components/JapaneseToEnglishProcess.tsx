@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { ArrowLeft, ChevronRight, Loader2, RefreshCw, BookOpen, Languages, FileText, ListChecks } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { getJSTDate } from '../utils/dateUtils';
 
 interface Props {
   onBack: () => void;
@@ -119,14 +120,38 @@ export default function JapaneseToEnglishProcess({ onBack }: Props) {
     fetchContent(genre, difficulty);
   };
 
-  const handleRetry = () => {
+  const incrementOSpeaking = async () => {
+    if (!user?.id || !user?.email) return;
+    const today = getJSTDate();
+    const { data: diary } = await supabase
+      .from('s_diaries')
+      .select('o_speaking')
+      .eq('user_id', user.id)
+      .eq('date', today)
+      .maybeSingle();
+    if (diary) {
+      await supabase
+        .from('s_diaries')
+        .update({ o_speaking: (diary.o_speaking ?? 0) + 1 })
+        .eq('user_id', user.id)
+        .eq('date', today);
+    } else {
+      await supabase
+        .from('s_diaries')
+        .insert({ user_id: user.id, email: user.email, date: today, o_speaking: 1 });
+    }
+  };
+
+  const handleRetry = async () => {
+    await incrementOSpeaking();
     setPhase('genre-select');
     setResult(null);
     setError(null);
     setSelectedGenre('');
   };
 
-  const handleNewSentence = () => {
+  const handleNewSentence = async () => {
+    await incrementOSpeaking();
     fetchContent(selectedGenre, difficulty);
     setPhase('genre-select');
   };
