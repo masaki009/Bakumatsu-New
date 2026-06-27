@@ -151,7 +151,7 @@ export default function SlashReading({ onBack }: Props) {
       const today = getJSTDate();
       const { data: diaryData, error: readError } = await supabase
         .from('s_diaries')
-        .select('ex_reading')
+        .select('ex_reading, s_reading')
         .eq('user_id', user.id)
         .eq('date', today)
         .maybeSingle();
@@ -160,7 +160,10 @@ export default function SlashReading({ onBack }: Props) {
       if (diaryData) {
         const { error: updateError } = await supabase
           .from('s_diaries')
-          .update({ ex_reading: (diaryData.ex_reading ?? 0) + wordCount })
+          .update({
+            ex_reading: (diaryData.ex_reading ?? 0) + wordCount,
+            s_reading: (diaryData.s_reading ?? 0) + 1,
+          })
           .eq('user_id', user.id)
           .eq('date', today);
         if (updateError) throw updateError;
@@ -170,6 +173,7 @@ export default function SlashReading({ onBack }: Props) {
           email: user.email,
           date: today,
           ex_reading: wordCount,
+          s_reading: 1,
         });
         if (insertError) throw insertError;
       }
