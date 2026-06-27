@@ -133,7 +133,21 @@ export default function ExtensiveReadingLog({ onBack }: ExtensiveReadingLogProps
               />
             </div>
 
-           
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                WPM (Words Per Minute)
+              </label>
+              <input
+                type="number"
+                name="wpm"
+                value={formData.wpm}
+                onChange={handleChange}
+                placeholder="読書速度を入力"
+                min="0"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                required
+              />
+            </div>
 
             <button
               type="submit"
