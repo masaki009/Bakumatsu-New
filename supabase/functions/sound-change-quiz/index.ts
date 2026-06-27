@@ -62,7 +62,7 @@ Deno.serve(async (req: Request) => {
       "同化": "Assimilation — adjacent sounds influence each other (did you → didʒu, hit you → hitʃu, this year → thisʃir, etc.)",
       "リンキング": "Linking — word boundaries merge so the last sound of one word links to the first of the next (an apple → ananple, pick it up → pickitup, etc.)",
       "短縮形": "Contraction — multiple words reduced to one (wanna=want to, gimme=give me, gonna=going to, dunno=don't know, etc.)",
-      "ミックス": "Mix — a combination of multiple sound change types (reduction, assimilation, linking, and contraction) in one sentence",
+      "ランダム": "Mix — a combination of multiple sound change types (reduction, assimilation, linking, and contraction) in one sentence",
     };
 
     const typeDescription = typeDescriptions[type] || type;
@@ -81,7 +81,7 @@ ${avoidSection}${topicSection}
 Rules:
 - Prefer real movie or TV drama dialogue whenever possible. If you know the exact source, name it.
 - Each sentence should clearly illustrate the specified sound change.
-- For ミックス, include at least 2 different sound change types per sentence.
+- For ランダム, include at least 2 different sound change types per sentence.
 - Make the sentences varied in length, register (formal/casual), and speaker situation.
 - Do NOT repeat vocabulary or phrasing patterns across the 3 examples.
 
