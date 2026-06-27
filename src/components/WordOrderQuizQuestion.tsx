@@ -314,7 +314,7 @@ export default function WordOrderQuizQuestion({
               }`}
             >
               <PenLine size={16} />
-              あなたの英文
+              あなたの英文でチャレンジ
             </button>
           )}
 
