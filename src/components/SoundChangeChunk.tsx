@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { ArrowLeft, Zap, ChevronRight, ChevronLeft, Loader2, Volume2, Film } from 'lucide-react';
 
-type SoundChangeType = '脱落・弱化' | '同化' | 'リンキング' | '短縮形' | 'ミックス';
+type SoundChangeType = '脱落・弱化' | '同化' | 'リンキング' | '短縮形' | 'ランダム';
 
 interface Chunk {
   original: string;
@@ -21,7 +21,7 @@ interface SoundChangeExample {
   batchSize: number;
 }
 
-const TYPES: SoundChangeType[] = ['脱落・弱化', '同化', 'リンキング', '短縮形', 'ミックス'];
+const TYPES: SoundChangeType[] = ['脱落・弱化', '同化', 'リンキング', '短縮形', 'ランダム'];
 
 const TYPE_COLORS: Record<SoundChangeType, string> = {
   '脱落・弱化': 'bg-orange-100 text-orange-700 border-orange-300',
