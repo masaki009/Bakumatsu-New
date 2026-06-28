@@ -117,18 +117,59 @@ export default function ExReading({ onBack }: ExReadingProps) {
     try {
       const today = getJSTDate();
 
-      const { error } = await supabase
+      const { data: exReadingData, error: exReadingFetchError } = await supabase
         .from('ex_reading')
-        .insert({
-          user_id: user.id,
-          email: user.email,
-          reading_date: today,
-          words: wordCount,
-          wpm: wpm,
-          is_reading_aloud: false
-        });
+        .select('reading_total')
+        .eq('user_id', user.id)
+        .maybeSingle();
 
-      if (error) throw error;
+      if (exReadingFetchError) {
+        console.error('Error fetching ex_reading:', exReadingFetchError);
+      } else if (exReadingData) {
+        const { error: exReadingUpdateError } = await supabase
+          .from('ex_reading')
+          .update({
+            reading_total: (exReadingData.reading_total ?? 0) + wordCount,
+          })
+          .eq('user_id', user.id);
+
+        if (exReadingUpdateError) {
+          console.error('Error updating ex_reading:', exReadingUpdateError);
+        }
+      } else {
+        const { error: insertExReadingError } = await supabase
+          .from('ex_reading')
+          .insert({
+            user_id: user.id,
+            email: user.email,
+            reading_total: wordCount,
+          });
+
+        if (insertExReadingError) {
+          console.error('Error inserting ex_reading:', insertExReadingError);
+        }
+      }
+
+      const { data: vitalData, error: vitalFetchError } = await supabase
+        .from('vital')
+        .select('readbooks')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (vitalFetchError) {
+        console.error('Error fetching vital:', vitalFetchError);
+      } else if (vitalData) {
+        const { error: vitalUpdateError } = await supabase
+          .from('vital')
+          .update({
+            readbooks: (vitalData.readbooks ?? 0) + wordCount,
+          })
+          .eq('user_id', user.id);
+
+        if (vitalUpdateError) {
+          console.error('Error updating vital:', vitalUpdateError);
+        }
+      }
 
       const { data: diaryData, error: diaryError } = await supabase
         .from('s_diaries')
