@@ -150,6 +150,8 @@ export default function SlashReading({ onBack }: Props) {
     try {
       const today = getJSTDate();
 
+      let newReadingTotal = wordCount;
+
       const { data: exReadingData, error: exReadingFetchError } = await supabase
         .from('ex_reading')
         .select('reading_total')
@@ -159,10 +161,12 @@ export default function SlashReading({ onBack }: Props) {
       if (exReadingFetchError) {
         console.error('Error fetching ex_reading:', exReadingFetchError);
       } else if (exReadingData) {
+        newReadingTotal = (exReadingData.reading_total ?? 0) + wordCount;
+
         const { error: exReadingUpdateError } = await supabase
           .from('ex_reading')
           .update({
-            reading_total: (exReadingData.reading_total ?? 0) + wordCount,
+            reading_total: newReadingTotal,
           })
           .eq('user_id', user.id);
 
@@ -175,7 +179,7 @@ export default function SlashReading({ onBack }: Props) {
           .insert({
             user_id: user.id,
             email: user.email,
-            reading_total: wordCount,
+            reading_total: newReadingTotal,
           });
 
         if (insertExReadingError) {
@@ -183,25 +187,16 @@ export default function SlashReading({ onBack }: Props) {
         }
       }
 
-      const { data: vitalData, error: vitalFetchError } = await supabase
+      // vital.readbooks は ex_reading.reading_total の最新値をそのまま代入する（増分ではなく同期）
+      const { error: vitalUpdateError } = await supabase
         .from('vital')
-        .select('readbooks')
-        .eq('user_id', user.id)
-        .maybeSingle();
+        .update({
+          readbooks: newReadingTotal,
+        })
+        .eq('user_id', user.id);
 
-      if (vitalFetchError) {
-        console.error('Error fetching vital:', vitalFetchError);
-      } else if (vitalData) {
-        const { error: vitalUpdateError } = await supabase
-          .from('vital')
-          .update({
-            readbooks: (vitalData.readbooks ?? 0) + wordCount,
-          })
-          .eq('user_id', user.id);
-
-        if (vitalUpdateError) {
-          console.error('Error updating vital:', vitalUpdateError);
-        }
+      if (vitalUpdateError) {
+        console.error('Error updating vital:', vitalUpdateError);
       }
 
       const { data: diaryData, error: readError } = await supabase
