@@ -164,7 +164,7 @@ export default function ExtensiveReadingLog({ onBack }: ExtensiveReadingLogProps
         <div className="bg-white rounded-2xl shadow-lg p-8">
           <div className="flex items-center gap-3 mb-6">
             <BookOpen className="w-8 h-8 text-blue-600" />
-            <h1 className="text-3xl font-bold text-gray-800">多読・単語貯金</h1>
+            <h1 className="text-3xl font-bold text-gray-800">多読貯金箱</h1>
           </div>
 
           {message && (
