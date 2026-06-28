@@ -181,6 +181,27 @@ export default function ReportSubmit({ onBack }: ReportSubmitProps) {
 
       if (upsertError) throw upsertError;
 
+      // vital.time を s_diaries.time の合計（生涯累計）で同期する（増分ではなく合計を再計算して代入）
+      const { data: allDiaries, error: allDiariesError } = await supabase
+        .from('s_diaries')
+        .select('time')
+        .eq('user_id', userProfile.id);
+
+      if (allDiariesError) {
+        console.error('Error fetching diaries for time total:', allDiariesError);
+      } else {
+        const totalTime = (allDiaries || []).reduce((sum, d) => sum + (d.time || 0), 0);
+
+        const { error: vitalTimeUpdateError } = await supabase
+          .from('vital')
+          .update({ time: totalTime })
+          .eq('user_id', userProfile.id);
+
+        if (vitalTimeUpdateError) {
+          console.error('Error updating vital.time:', vitalTimeUpdateError);
+        }
+      }
+
       // Calculate energy change
       const newEnergy = formData.s_reading + formData.o_speaking + formData.listening + formData.words;
       const oldEnergy = existingDiary
