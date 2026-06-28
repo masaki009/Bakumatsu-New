@@ -149,6 +149,61 @@ export default function SlashReading({ onBack }: Props) {
     setSaveMessage(null);
     try {
       const today = getJSTDate();
+
+      const { data: exReadingData, error: exReadingFetchError } = await supabase
+        .from('ex_reading')
+        .select('reading_total')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (exReadingFetchError) {
+        console.error('Error fetching ex_reading:', exReadingFetchError);
+      } else if (exReadingData) {
+        const { error: exReadingUpdateError } = await supabase
+          .from('ex_reading')
+          .update({
+            reading_total: (exReadingData.reading_total ?? 0) + wordCount,
+          })
+          .eq('user_id', user.id);
+
+        if (exReadingUpdateError) {
+          console.error('Error updating ex_reading:', exReadingUpdateError);
+        }
+      } else {
+        const { error: insertExReadingError } = await supabase
+          .from('ex_reading')
+          .insert({
+            user_id: user.id,
+            email: user.email,
+            reading_total: wordCount,
+          });
+
+        if (insertExReadingError) {
+          console.error('Error inserting ex_reading:', insertExReadingError);
+        }
+      }
+
+      const { data: vitalData, error: vitalFetchError } = await supabase
+        .from('vital')
+        .select('readbooks')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (vitalFetchError) {
+        console.error('Error fetching vital:', vitalFetchError);
+      } else if (vitalData) {
+        const { error: vitalUpdateError } = await supabase
+          .from('vital')
+          .update({
+            readbooks: (vitalData.readbooks ?? 0) + wordCount,
+          })
+          .eq('user_id', user.id);
+
+        if (vitalUpdateError) {
+          console.error('Error updating vital:', vitalUpdateError);
+        }
+      }
+
       const { data: diaryData, error: readError } = await supabase
         .from('s_diaries')
         .select('ex_reading, s_reading')
