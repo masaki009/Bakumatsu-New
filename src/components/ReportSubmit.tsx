@@ -209,6 +209,41 @@ export default function ReportSubmit({ onBack }: ReportSubmitProps) {
         : 0;
       const energyChange = newEnergy - oldEnergy;
 
+      // Calculate words delta and sync vocab_total
+      const wordsDelta = formData.words - (existingDiary?.words ?? 0);
+      if (wordsDelta !== 0) {
+        const { data: exReadingData, error: exReadingFetchError } = await supabase
+          .from('ex_reading')
+          .select('vocab_total')
+          .eq('user_id', userProfile.id)
+          .maybeSingle();
+
+        if (exReadingFetchError) throw exReadingFetchError;
+
+        let newVocabTotal: number;
+
+        if (exReadingData) {
+          newVocabTotal = (exReadingData.vocab_total ?? 0) + wordsDelta;
+          const { error: exReadingUpdateError } = await supabase
+            .from('ex_reading')
+            .update({ vocab_total: newVocabTotal })
+            .eq('user_id', userProfile.id);
+          if (exReadingUpdateError) throw exReadingUpdateError;
+        } else {
+          newVocabTotal = wordsDelta;
+          const { error: exReadingInsertError } = await supabase
+            .from('ex_reading')
+            .insert([{ user_id: userProfile.id, email: userProfile.email, vocab_total: newVocabTotal, reading_total: 0 }]);
+          if (exReadingInsertError) throw exReadingInsertError;
+        }
+
+        const { error: vitalVocabUpdateError } = await supabase
+          .from('vital')
+          .update({ vocab_total: newVocabTotal })
+          .eq('user_id', userProfile.id);
+        if (vitalVocabUpdateError) throw vitalVocabUpdateError;
+      }
+
       // Update pre_vital energy only if there's a change
       if (energyChange !== 0) {
         const { data: preVitalData, error: preVitalFetchError } = await supabase

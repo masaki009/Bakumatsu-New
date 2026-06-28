@@ -44,7 +44,6 @@ export default function ExtensiveReadingLog({ onBack }: ExtensiveReadingLogProps
   const [formData, setFormData] = useState(() => ({
     reading_date: formatJSTDateLocale(),
     words: '',
-    vocab: '',
   }));
 
   useEffect(() => {
@@ -92,7 +91,6 @@ export default function ExtensiveReadingLog({ onBack }: ExtensiveReadingLogProps
       setFormData({
         reading_date: formatJSTDateLocale(),
         words: '',
-        vocab: '',
       });
     } catch (error: any) {
       console.error('Error saving reading record:', error);
@@ -207,22 +205,6 @@ export default function ExtensiveReadingLog({ onBack }: ExtensiveReadingLogProps
                 min="0"
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                 required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                単語数
-                <span className="ml-2 text-xs font-normal text-gray-400">（新しく覚えた単語）</span>
-              </label>
-              <input
-                type="number"
-                name="vocab"
-                value={formData.vocab}
-                onChange={handleChange}
-                placeholder="覚えた単語数を入力（任意）"
-                min="0"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
               />
             </div>
 
