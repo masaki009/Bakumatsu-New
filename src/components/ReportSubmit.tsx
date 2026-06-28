@@ -41,10 +41,30 @@ export default function ReportSubmit({ onBack }: ReportSubmitProps) {
     one_word: '',
   });
   const [successMessage, setSuccessMessage] = useState('');
+  const [readingTotal, setReadingTotal] = useState(0);
 
   useEffect(() => {
     loadDiaryForDate(formData.date);
+    loadReadingTotal();
   }, []);
+
+  const loadReadingTotal = async () => {
+    if (!userProfile?.id) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('ex_reading')
+        .select('reading_total')
+        .eq('user_id', userProfile.id)
+        .maybeSingle();
+
+      if (error) throw error;
+
+      setReadingTotal(data?.reading_total ?? 0);
+    } catch (error) {
+      console.error('Error loading reading total:', error);
+    }
+  };
 
   const loadDiaryForDate = async (selectedDate: string) => {
     if (!userProfile?.id) return;
@@ -317,7 +337,7 @@ export default function ReportSubmit({ onBack }: ReportSubmitProps) {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  ボキャブラリー（件数）（自己申告欄）
+                  ボキャブラリー（件数）
                 </label>
                 <input
                   type="number"
@@ -334,17 +354,17 @@ export default function ReportSubmit({ onBack }: ReportSubmitProps) {
                 </label>
                 <input
                   type="number"
-                  value={formData.ex_reading}
+                  value={readingTotal}
                   disabled
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-500 cursor-not-allowed"
                   min="0"
                 />
-                <p className="mt-1 text-xs text-gray-500">読書記録から自動反映</p>
+                <p className="mt-1 text-xs text-gray-500">読書記録からの自動反映（これまでの累計）</p>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  学習時間（分）（自己申告欄）
+                  学習時間（分）
                 </label>
                 <input
                   type="number"
