@@ -50,9 +50,9 @@ export function formatJSTDate(utcDateString: string): string {
   const utcTime = date.getTime();
   const jstDate = new Date(utcTime + JST_OFFSET_MINUTES * 60000);
 
-  const year = jstDate.getFullYear();
-  const month = String(jstDate.getMonth() + 1).padStart(2, '0');
-  const day = String(jstDate.getDate()).padStart(2, '0');
+  const year = jstDate.getUTCFullYear();
+  const month = String(jstDate.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(jstDate.getUTCDate()).padStart(2, '0');
 
   return `${year}/${month}/${day}`;
 }
@@ -62,11 +62,11 @@ export function formatJSTDateTime(utcDateString: string): string {
   const utcTime = date.getTime();
   const jstDate = new Date(utcTime + JST_OFFSET_MINUTES * 60000);
 
-  const year = jstDate.getFullYear();
-  const month = String(jstDate.getMonth() + 1).padStart(2, '0');
-  const day = String(jstDate.getDate()).padStart(2, '0');
-  const hours = String(jstDate.getHours()).padStart(2, '0');
-  const minutes = String(jstDate.getMinutes()).padStart(2, '0');
+  const year = jstDate.getUTCFullYear();
+  const month = String(jstDate.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(jstDate.getUTCDate()).padStart(2, '0');
+  const hours = String(jstDate.getUTCHours()).padStart(2, '0');
+  const minutes = String(jstDate.getUTCMinutes()).padStart(2, '0');
 
   return `${year}/${month}/${day} ${hours}:${minutes}`;
 }
@@ -111,7 +111,8 @@ export function formatJSTDateTimeLocale(date?: Date): string {
     day: '2-digit',
     hour: '2-digit',
     minute: '2-digit',
-    hour12: false
+    hour12: false,
+    timeZone: 'UTC'
   });
 }
 
@@ -132,7 +133,8 @@ export function formatJSTDateLocale(date?: Date): string {
   return jstDate.toLocaleDateString('ja-JP', {
     year: 'numeric',
     month: '2-digit',
-    day: '2-digit'
+    day: '2-digit',
+    timeZone: 'UTC'
   });
 }
 
