@@ -5,7 +5,31 @@ import { useVitalSync } from '../hooks/useVitalSync';
 import { supabase } from '../lib/supabase';
 import { getPetStage, getTodayDate } from '../utils/gameLogic';
 import { getJSTDateTime, getJSTDate } from '../utils/dateUtils';
-import { Heart, Zap, Droplets, BookOpen, LogOut, ArrowLeft, Syringe, Stethoscope, Clock, Egg } from 'lucide-react';
+import { Heart, Zap, Droplets, BookOpen, LogOut, ArrowLeft, Syringe, Stethoscope, Clock, Egg, Sprout, TreePine, Star, Award, Trophy, Gem, Crown, Hash } from 'lucide-react';
+
+interface BadgeLevel {
+  min: number;
+  label: string;
+  color: string;
+  bgColor: string;
+  borderColor: string;
+  progressColor: string;
+  Icon: React.ElementType;
+}
+
+const BADGE_LEVELS: BadgeLevel[] = [
+  { min: 0,       label: 'ビギナー',         color: 'text-gray-600',   bgColor: 'bg-gray-50',    borderColor: 'border-gray-300',  progressColor: 'bg-gray-400',   Icon: Sprout   },
+  { min: 10000,   label: 'ブックウォーム',   color: 'text-green-700',  bgColor: 'bg-green-50',   borderColor: 'border-green-300', progressColor: 'bg-green-500',  Icon: TreePine },
+  { min: 50000,   label: 'リーダー',         color: 'text-blue-700',   bgColor: 'bg-blue-50',    borderColor: 'border-blue-300',  progressColor: 'bg-blue-500',   Icon: Star     },
+  { min: 100000,  label: '多読マスター',     color: 'text-amber-700',  bgColor: 'bg-amber-50',   borderColor: 'border-amber-300', progressColor: 'bg-amber-500',  Icon: Award    },
+  { min: 200000,  label: '多読チャンピオン', color: 'text-orange-700', bgColor: 'bg-orange-50',  borderColor: 'border-orange-300',progressColor: 'bg-orange-500', Icon: Trophy   },
+  { min: 500000,  label: '多読エキスパート', color: 'text-rose-700',   bgColor: 'bg-rose-50',    borderColor: 'border-rose-300',  progressColor: 'bg-rose-500',   Icon: Gem      },
+  { min: 1000000, label: '多読レジェンド',   color: 'text-violet-700', bgColor: 'bg-violet-50',  borderColor: 'border-violet-300',progressColor: 'bg-violet-500', Icon: Crown    },
+];
+
+function getBadge(total: number): BadgeLevel {
+  return BADGE_LEVELS.findLast(b => total >= b.min) ?? BADGE_LEVELS[0];
+}
 
 interface DigitalPetDashboardProps {
   onBack?: () => void;
@@ -351,13 +375,52 @@ export default function DigitalPetDashboard({ onBack }: DigitalPetDashboardProps
                   )}
                 </div>
 
-                <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg p-4 mb-3">
+                <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg p-4 mb-3 border border-blue-200">
+                  {(() => {
+                    const total = vital.readbooks ?? 0;
+                    const badge = getBadge(total);
+                    const nextBadge = BADGE_LEVELS.find(b => total < b.min) ?? null;
+                    const progressPct = nextBadge
+                      ? Math.min(100, ((total - badge.min) / (nextBadge.min - badge.min)) * 100)
+                      : 100;
+                    return (
+                      <>
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <BookOpen className="w-5 h-5 text-blue-600" />
+                            <span className="font-medium text-gray-700">総多読語数</span>
+                          </div>
+                          <span className="text-2xl font-bold text-blue-700">{total.toLocaleString()}語</span>
+                        </div>
+                        <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${badge.bgColor} ${badge.borderColor} ${badge.color} mb-2`}>
+                          <badge.Icon size={11} />
+                          {badge.label}
+                        </div>
+                        {nextBadge && (
+                          <div>
+                            <div className="h-2 bg-white rounded-full border border-blue-200 overflow-hidden">
+                              <div
+                                className={`h-full rounded-full transition-all duration-700 ${badge.progressColor}`}
+                                style={{ width: `${progressPct}%` }}
+                              />
+                            </div>
+                            <p className="text-xs text-gray-400 mt-1">
+                              次: {nextBadge.label}（あと {(nextBadge.min - total).toLocaleString()} 語）
+                            </p>
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
+                </div>
+
+                <div className="bg-gradient-to-r from-teal-50 to-teal-100 rounded-lg p-4 mb-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <BookOpen className="w-5 h-5 text-blue-600" />
-                      <span className="font-medium text-gray-700">総多読語数</span>
+                      <Hash className="w-5 h-5 text-teal-600" />
+                      <span className="font-medium text-gray-700">単語数</span>
                     </div>
-                    <span className="text-2xl font-bold text-blue-700">{vital.readbooks}語</span>
+                    <span className="text-2xl font-bold text-teal-700">{(vital.vocab_total ?? 0).toLocaleString()}語</span>
                   </div>
                 </div>
 

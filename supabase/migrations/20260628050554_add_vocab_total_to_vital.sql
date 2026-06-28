@@ -1,0 +1,1 @@
+ALTER TABLE vital ADD COLUMN IF NOT EXISTS vocab_total integer NOT NULL DEFAULT 0;

@@ -16,6 +16,7 @@ export interface Vital {
   sick: number;
   readbooks: number;
   time?: number;
+  vocab_total?: number;
   last_updated_date: string;
 }
 
