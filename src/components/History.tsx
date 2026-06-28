@@ -33,20 +33,57 @@ export default function History({ onBack }: HistoryProps) {
     fetchEntries();
   }, [user]);
 
+  const HISTORY_DAYS = 30;
+
+  const getJSTDateDaysAgo = (daysAgo: number): string => {
+    const now = new Date();
+    const jstDate = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), now.getUTCHours() + 9, now.getUTCMinutes())
+    );
+    jstDate.setUTCDate(jstDate.getUTCDate() - daysAgo);
+    return jstDate.toISOString().split('T')[0];
+  };
+
   const fetchEntries = async () => {
     if (!user) return;
 
     try {
       setLoading(true);
+
+      const dateRange = Array.from({ length: HISTORY_DAYS }, (_, i) => getJSTDateDaysAgo(i));
+      const oldestDate = dateRange[dateRange.length - 1];
+
       const { data, error } = await supabase
         .from('s_diaries')
         .select('*')
         .eq('user_id', user.id)
+        .gte('date', oldestDate)
         .order('date', { ascending: false });
 
       if (error) throw error;
 
-      setEntries(data || []);
+      const entryByDate = new Map((data || []).map((entry) => [entry.date, entry]));
+
+      const merged: DiaryEntry[] = dateRange.map((date) => {
+        const existing = entryByDate.get(date);
+        if (existing) return existing;
+
+        return {
+          id: `empty-${date}`,
+          date,
+          s_reading: 0,
+          o_speaking: 0,
+          listening: 0,
+          words: 0,
+          ex_reading: 0,
+          time: 0,
+          self_judge: null,
+          self_topic: '',
+          one_word: '',
+        };
+      });
+
+      setEntries(merged);
     } catch (err: any) {
       console.error('Error fetching diary entries:', err);
       setError(err.message);
@@ -91,10 +128,6 @@ export default function History({ onBack }: HistoryProps) {
           ) : error ? (
             <div className="bg-red-50 text-red-800 p-4 rounded-lg border border-red-200">
               エラー: {error}
-            </div>
-          ) : entries.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-gray-600">記録がありません</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
