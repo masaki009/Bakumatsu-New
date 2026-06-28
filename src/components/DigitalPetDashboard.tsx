@@ -326,6 +326,23 @@ export default function DigitalPetDashboard({ onBack }: DigitalPetDashboardProps
                   <span className="text-gray-900 font-medium">{lastUpdatedDateFormatted}</span>
                 </div>
               </div>
+
+              {/* 多読バッジ */}
+              {(() => {
+                const total = vital.readbooks ?? 0;
+                const badge = getBadge(total);
+                return (
+                  <div className={`rounded-xl border-2 ${badge.borderColor} ${badge.bgColor} p-4`}>
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">多読バッジ</p>
+                    <div className="flex items-center gap-3">
+                      <div className={`p-2 rounded-lg border ${badge.borderColor}`}>
+                        <badge.Icon className={`w-6 h-6 ${badge.color}`} />
+                      </div>
+                      <span className={`text-lg font-bold ${badge.color}`}>{badge.label}</span>
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
 
             <div className="space-y-4">
@@ -375,26 +392,14 @@ export default function DigitalPetDashboard({ onBack }: DigitalPetDashboardProps
                   )}
                 </div>
 
-                <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg p-4 mb-3 border border-blue-200">
-                  {(() => {
-                    const total = vital.readbooks ?? 0;
-                    const badge = getBadge(total);
-                    return (
-                      <>
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center gap-2">
-                            <BookOpen className="w-5 h-5 text-blue-600" />
-                            <span className="font-medium text-gray-700">総多読語数</span>
-                          </div>
-                          <span className="text-2xl font-bold text-blue-700">{total.toLocaleString()}語</span>
-                        </div>
-                        <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold border ${badge.bgColor} ${badge.borderColor} ${badge.color}`}>
-                          <badge.Icon size={11} />
-                          {badge.label}
-                        </div>
-                      </>
-                    );
-                  })()}
+                <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg p-4 mb-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <BookOpen className="w-5 h-5 text-blue-600" />
+                      <span className="font-medium text-gray-700">総多読語数</span>
+                    </div>
+                    <span className="text-2xl font-bold text-blue-700">{(vital.readbooks ?? 0).toLocaleString()}語</span>
+                  </div>
                 </div>
 
                 <div className="bg-gradient-to-r from-teal-50 to-teal-100 rounded-lg p-4 mb-3">
