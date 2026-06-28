@@ -34,10 +34,6 @@ function getBadge(total: number): BadgeLevel {
   return BADGE_LEVELS.findLast(b => total >= b.min) ?? BADGE_LEVELS[0];
 }
 
-function getNextBadge(total: number): BadgeLevel | null {
-  return BADGE_LEVELS.find(b => total < b.min) ?? null;
-}
-
 export default function ExtensiveReadingLog({ onBack }: ExtensiveReadingLogProps) {
   const { user } = useAuth();
   useVitalSync({ userId: user?.id });
@@ -113,10 +109,6 @@ export default function ExtensiveReadingLog({ onBack }: ExtensiveReadingLogProps
 
   const currentTotal = readingTotal ?? 0;
   const badge = getBadge(currentTotal);
-  const nextBadge = getNextBadge(currentTotal);
-  const progressPct = nextBadge
-    ? Math.min(100, ((currentTotal - badge.min) / (nextBadge.min - badge.min)) * 100)
-    : 100;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
@@ -133,7 +125,7 @@ export default function ExtensiveReadingLog({ onBack }: ExtensiveReadingLogProps
 
         {/* バッジカード */}
         <div className={`mb-5 rounded-2xl border-2 ${badge.borderColor} ${badge.bgColor} p-6 shadow-sm`}>
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className={`p-2 rounded-xl ${badge.bgColor} border ${badge.borderColor}`}>
                 <badge.Icon className={`w-7 h-7 ${badge.color}`} />
@@ -151,26 +143,6 @@ export default function ExtensiveReadingLog({ onBack }: ExtensiveReadingLogProps
               <p className="text-xs text-gray-500">語</p>
             </div>
           </div>
-
-          {nextBadge ? (
-            <div>
-              <div className="flex justify-between text-xs text-gray-500 mb-1">
-                <span>{badge.label}</span>
-                <span>次: {nextBadge.label}（{nextBadge.min.toLocaleString()}語）</span>
-              </div>
-              <div className="h-2.5 bg-white rounded-full border border-gray-200 overflow-hidden">
-                <div
-                  className={`h-full rounded-full transition-all duration-700 ${badge.progressColor}`}
-                  style={{ width: `${progressPct}%` }}
-                />
-              </div>
-              <p className="text-xs text-gray-400 mt-1 text-right">
-                あと {(nextBadge.min - currentTotal).toLocaleString()} 語
-              </p>
-            </div>
-          ) : (
-            <p className={`text-sm font-semibold ${badge.color} text-center mt-2`}>最高ランク達成！</p>
-          )}
 
           {/* バッジ一覧 */}
           <div className="mt-4 flex gap-2 flex-wrap">

@@ -379,10 +379,6 @@ export default function DigitalPetDashboard({ onBack }: DigitalPetDashboardProps
                   {(() => {
                     const total = vital.readbooks ?? 0;
                     const badge = getBadge(total);
-                    const nextBadge = BADGE_LEVELS.find(b => total < b.min) ?? null;
-                    const progressPct = nextBadge
-                      ? Math.min(100, ((total - badge.min) / (nextBadge.min - badge.min)) * 100)
-                      : 100;
                     return (
                       <>
                         <div className="flex items-center justify-between mb-2">
@@ -392,23 +388,10 @@ export default function DigitalPetDashboard({ onBack }: DigitalPetDashboardProps
                           </div>
                           <span className="text-2xl font-bold text-blue-700">{total.toLocaleString()}語</span>
                         </div>
-                        <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${badge.bgColor} ${badge.borderColor} ${badge.color} mb-2`}>
+                        <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold border ${badge.bgColor} ${badge.borderColor} ${badge.color}`}>
                           <badge.Icon size={11} />
                           {badge.label}
                         </div>
-                        {nextBadge && (
-                          <div>
-                            <div className="h-2 bg-white rounded-full border border-blue-200 overflow-hidden">
-                              <div
-                                className={`h-full rounded-full transition-all duration-700 ${badge.progressColor}`}
-                                style={{ width: `${progressPct}%` }}
-                              />
-                            </div>
-                            <p className="text-xs text-gray-400 mt-1">
-                              次: {nextBadge.label}（あと {(nextBadge.min - total).toLocaleString()} 語）
-                            </p>
-                          </div>
-                        )}
                       </>
                     );
                   })()}
