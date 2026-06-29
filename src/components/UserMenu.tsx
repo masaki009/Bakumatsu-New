@@ -332,7 +332,7 @@ export default function UserMenu() {
               <p className="text-gray-600">機能を選択してください</p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {menuItems.map((item, index) => {
                 const Icon = item.icon;
                 return (
