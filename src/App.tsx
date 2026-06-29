@@ -3,9 +3,14 @@ import { useAuth } from './contexts/AuthContext';
 import Login from './components/Login';
 import UserMenu from './components/UserMenu';
 import AdminMenu from './components/AdminMenu';
+import ResetPassword from './components/ResetPassword';
 
 function App() {
   const { user, userProfile, loading } = useAuth();
+
+  if (window.location.pathname === '/reset-password') {
+    return <ResetPassword />;
+  }
 
   if (loading) {
     return (
