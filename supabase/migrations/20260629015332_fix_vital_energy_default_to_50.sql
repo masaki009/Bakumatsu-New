@@ -1,0 +1,1 @@
+ALTER TABLE public.vital ALTER COLUMN energy SET DEFAULT 50;
