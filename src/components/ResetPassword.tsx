@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { KeyRound, CheckCircle, AlertCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
@@ -10,9 +10,15 @@ export default function ResetPassword() {
   const [success, setSuccess] = useState(false);
   const [sessionReady, setSessionReady] = useState(false);
   const [sessionError, setSessionError] = useState('');
+  const exchanged = useRef(false);
 
   useEffect(() => {
+    if (exchanged.current) return;
+    exchanged.current = true;
+
     const code = new URLSearchParams(window.location.search).get('code');
+    console.log('[ResetPassword] exchangeCodeForSession 呼び出し開始, code:', code ? `${code.slice(0, 8)}...` : 'なし');
+
     if (!code) {
       setSessionError('無効なリンクです。パスワードリセットメールのリンクをご確認ください。');
       return;
@@ -21,8 +27,10 @@ export default function ResetPassword() {
     supabase.auth.exchangeCodeForSession(code)
       .then(({ error }) => {
         if (error) {
+          console.log('[ResetPassword] exchangeCodeForSession 失敗:', error.message);
           setSessionError('リンクが無効または期限切れです。再度パスワードリセットをお試しください。');
         } else {
+          console.log('[ResetPassword] exchangeCodeForSession 成功');
           setSessionReady(true);
         }
       });
