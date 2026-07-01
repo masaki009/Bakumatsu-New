@@ -104,7 +104,7 @@ export default function UserMenu() {
       subItems: [
         { id: 'daily-report', label: '日報登録', icon: FileText },
         { id: 'history', label: '学習履歴', icon: TrendingUp },
-        { id: 'extensive-reading', label: '多読・単語貯金箱', icon: BookOpen },
+        { id: 'extensive-reading', label: '多読貯金箱', icon: BookOpen },
       ],
     },
     {
@@ -332,28 +332,21 @@ export default function UserMenu() {
               <p className="text-gray-600">機能を選択してください</p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {menuItems.map((item, index) => {
                 const Icon = item.icon;
-                const isTopRow = index < 3;
-                const numberColor = isTopRow ? 'text-yellow-600' : 'text-blue-600';
-                const borderHoverColor = isTopRow ? 'hover:border-yellow-500' : 'hover:border-blue-500';
-                const iconBgColor = isTopRow ? 'bg-yellow-100' : 'bg-blue-100';
-                const iconBgHoverColor = isTopRow ? 'group-hover:bg-yellow-200' : 'group-hover:bg-blue-200';
-                const iconColor = isTopRow ? 'text-yellow-600' : 'text-blue-600';
-                const bgColor = isTopRow ? 'bg-yellow-50' : 'bg-white';
                 return (
                   <button
                     key={item.id}
                     onClick={() => setSelectedMenu(item.id)}
-                    className={`${bgColor} rounded-xl p-6 border-2 border-gray-200 ${borderHoverColor} hover:shadow-lg transition-all text-left group`}
+                    className="bg-white rounded-xl p-6 border-2 border-gray-200 hover:border-blue-500 hover:shadow-lg transition-all text-left group"
                   >
                     <div className="flex flex-col items-center text-center gap-4">
                       <div className="w-full flex justify-start">
-                        <span className={`text-2xl font-bold ${numberColor}`}>{index + 1}.</span>
+                        <span className="text-2xl font-bold text-blue-600">{index + 1}.</span>
                       </div>
-                      <div className={`p-4 ${iconBgColor} rounded-lg ${iconBgHoverColor} transition-colors`}>
-                        <Icon size={32} className={iconColor} />
+                      <div className="p-4 bg-blue-100 rounded-lg group-hover:bg-blue-200 transition-colors">
+                        <Icon size={32} className="text-blue-600" />
                       </div>
                       <div>
                         <h3 className="text-xl font-semibold text-gray-900 mb-1">{item.label}</h3>
